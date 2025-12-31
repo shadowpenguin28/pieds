@@ -3,18 +3,19 @@ from django.db import models
 from django.utils.translation import gettext_lazy as _
 from .managers import CustomUserManager
 
+USER_TYPES = (
+    ('PATIENT', 'Patient'),
+    ('DOCTOR', 'Doctor'),
+    ('PROVIDER', 'Provider'),
+)
+
 class User(AbstractUser):
-    choices = (
-        ('PATIENT', 'Patient'),
-        ('DOCTOR', 'Doctor'),
-        ('PROVIDER', 'Provider'),
-    )
 
     username = None
     email = models.EmailField(_("email address"), unique=True)
-    phone_number = models.CharField(max_length=15, unique=True, null=True, blank=True)
+    phone_number = models.CharField(max_length=15, null=True, blank=True)
     type = models.CharField(
-        max_length=50, choices=choices, default='PATIENT'
+        max_length=50, choices=USER_TYPES, default='PATIENT'
     )
 
     USERNAME_FIELD = "email"
@@ -67,16 +68,18 @@ class DoctorProfile(models.Model):
         return f"Dr. {self.user.email} - {self.specialization}"
 
 
+PROVIDER_TYPES = (
+    ("PHARMACY", "Pharmacy"),
+    ("LAB", "Lab"),
+    ("HOSPITAL", "Hospital"),
+)
+
 class ProviderProfile(models.Model):
-    class ProviderTypes(models.TextChoices):
-        PHARMACY = ("PHARMACY", "Pharmacy")
-        LAB = ("LAB", "Lab")
-        HOSPITAL = "HOSPITAL", "Hospital"
 
     user = models.OneToOneField(
         User, on_delete=models.CASCADE, related_name="provider_profile"
     )
-    type = models.CharField(max_length=50, choices=ProviderTypes.choices)
+    type = models.CharField(max_length=50, choices=PROVIDER_TYPES)
     name = models.CharField(max_length=255)
     address = models.TextField()
 
