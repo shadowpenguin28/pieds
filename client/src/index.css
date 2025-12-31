@@ -1,0 +1,10 @@
+@import "tailwindcss";
+
+@theme {
+  --font-family-sans: system-ui, Avenir, Helvetica, Arial, sans-serif;
+}
+
+/* Custom Global Styles */
+body {
+  @apply bg-gray-50 text-gray-900;
+}
