@@ -36,7 +36,7 @@ class CreateAbhaView(views.APIView):
     def post(self, request):
         serializer = CreateAbhaSerializer(data=request.data)
         if serializer.is_valid():
-            mobile = serializer.validated_data['mobile']
+            phone_number = serializer.validated_data['phone_number']
             aadhaar = serializer.validated_data.get('aadhaar', '')
 
             # Generate Fake Data
@@ -57,7 +57,7 @@ class CreateAbhaView(views.APIView):
                 'last_name': last_name,
                 'gender': gender,
                 'dob': dob,
-                'mobile': mobile,}
+                'phone_number': phone_number,}
             )
             if not created:
                 return Response({"error": "ABHA Registration with given aadhaar already exists!"}, status=status.HTTP_400_BAD_REQUEST) 
@@ -76,7 +76,7 @@ class CreateHPRView(views.APIView):
         serializer = CreateHPRSerializer(data=request.data)
         if serializer.is_valid():
             aadhaar = serializer.validated_data['aadhaar']
-            mobile = serializer.validated_data['mobile']
+            phone_number = serializer.validated_data['phone_number']
             specialization = serializer.validated_data['specialization']
 
             # Generate Unique HPR ID
@@ -92,7 +92,7 @@ class CreateHPRView(views.APIView):
                     'first_name': first_name,
                     'last_name': last_name,
                     'gender': gender,
-                    'mobile': mobile,
+                    'phone_number': phone_number,
                     'specialization': specialization,
                 }
             )
@@ -116,6 +116,7 @@ class CreateHFRView(views.APIView):
             name = serializer.validated_data['name']
             ftype = serializer.validated_data['type']
             address = serializer.validated_data['address']
+            phone_number = serializer.validated_data['phone_number']
 
             # Generate Unique HFR ID
             hfr_id = f"IN-{str(uuid.uuid4())[:8].upper()}"
@@ -124,7 +125,8 @@ class CreateHFRView(views.APIView):
                 hfr_id=hfr_id,
                 name=name,
                 type=ftype,
-                address=address
+                address=address,
+                phone_number=phone_number
             )
             return Response(MockHFRResponseSerializer(record).data, status=status.HTTP_201_CREATED)
         

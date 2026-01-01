@@ -14,7 +14,16 @@ class Journey(models.Model):
     title = models.CharField(max_length=255)
     status = models.CharField(max_length=20, choices=JOURNEY_STATUS_CHOICES, default="ACTIVE")
     created_at = models.DateTimeField(auto_now_add=True)
-    current_provider = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name="current_journeys")
+    
+    # Track which organization created/owns this journey
+    created_by_org = models.ForeignKey(
+        ProviderProfile,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="created_journeys",
+        help_text="Organization that initiated this journey"
+    )
 
     def __str__(self):
         return f"{self.title} ({self.patient})"
@@ -34,6 +43,22 @@ class JourneyStep(models.Model):
     type = models.CharField(max_length=20, choices=STEP_TYPES_CHOICES)
     notes = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    
+    # Track which org and doctor created this step
+    created_by_org = models.ForeignKey(
+        ProviderProfile,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="created_steps"
+    )
+    created_by_doctor = models.ForeignKey(
+        DoctorProfile,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="created_steps"
+    )
 
     class Meta:
         ordering = ['order']
@@ -60,3 +85,49 @@ class MedicalReport(models.Model):
 
     def __str__(self):
         return f"Report for {self.step}"
+
+
+# Consent Management for Cross-Org Data Access
+CONSENT_STATUS = (
+    ("PENDING", "Pending"),
+    ("GRANTED", "Granted"),
+    ("DENIED", "Denied"),
+    ("REVOKED", "Revoked"),
+)
+
+class HealthDataConsent(models.Model):
+    """
+    Tracks patient consent for data access across organizations.
+    When D2 at O2 wants to see Patient P's data created at O1,
+    this model tracks whether P has granted that access.
+    """
+    patient = models.ForeignKey(PatientProfile, on_delete=models.CASCADE, related_name="consents")
+    
+    # Who is requesting access?
+    requesting_org = models.ForeignKey(
+        ProviderProfile, 
+        on_delete=models.CASCADE, 
+        related_name="data_access_requests"
+    )
+    requesting_doctor = models.ForeignKey(
+        DoctorProfile, 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True,
+        related_name="data_access_requests"
+    )
+    
+    # Consent status
+    status = models.CharField(max_length=20, choices=CONSENT_STATUS, default="PENDING")
+    purpose = models.TextField(help_text="Why is access being requested?", blank=True)
+    
+    # Timestamps
+    requested_at = models.DateTimeField(auto_now_add=True)
+    responded_at = models.DateTimeField(null=True, blank=True)
+    
+    class Meta:
+        # Each org can only have one active consent request per patient
+        unique_together = ['patient', 'requesting_org']
+    
+    def __str__(self):
+        return f"Consent: {self.requesting_org} -> {self.patient} ({self.status})"

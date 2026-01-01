@@ -5,15 +5,15 @@ class CreateAbhaSerializer(serializers.Serializer):
     """
     Input serializer for creating a new ABHA ID.
     """
-    mobile = serializers.CharField(max_length=10)
+    phone_number = serializers.CharField(max_length=10)
     aadhaar = serializers.CharField(max_length=12)  # Required for verification
 
 class CreateHPRSerializer(serializers.Serializer):
     """
     Input serializer for creating a new HPR ID (Doctor).
     """
-    aadhar = serializers.CharField(max_length=12)
-    mobile = serializers.CharField(max_length=10)
+    aadhaar = serializers.CharField(max_length=12)
+    phone_number = serializers.CharField(max_length=10)
     specialization = serializers.CharField(max_length=100)
 
 class CreateHFRSerializer(serializers.Serializer):
@@ -23,18 +23,19 @@ class CreateHFRSerializer(serializers.Serializer):
     name = serializers.CharField(max_length=255)
     type = serializers.ChoiceField(choices=FACILITY_TYPES)
     address = serializers.CharField()
+    phone_number = serializers.CharField(max_length=10)
 
 class MockAbhaResponseSerializer(serializers.ModelSerializer):
     class Meta:
         model = MockAbhaRegistry
-        fields = ["abha_address", "first_name", "last_name", "gender", "dob", "mobile"]
+        fields = ["abha_address", "first_name", "last_name", "gender", "dob", "phone_number"]
 
 class MockHPRResponseSerializer(serializers.ModelSerializer):
     class Meta:
         model = MockHealthProfessionalRegistry
-        fields = ["hpr_id", "first_name", "last_name", "specialization", "mobile"]
+        fields = ["hpr_id", "first_name", "last_name", "specialization", "phone_number"]
 
 class MockHFRResponseSerializer(serializers.ModelSerializer):
     class Meta:
         model = MockHealthFacilityRegistry
-        fields = ["hfr_id", "name", "type", "address"]
+        fields = ["hfr_id", "name", "type", "address", "phone_number"]

@@ -1,3 +1,229 @@
-from django.shortcuts import render
+from rest_framework import generics, views, status
+from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
+from django.shortcuts import get_object_or_404
+from django.utils import timezone
+from django.db.models import Avg, F
+from datetime import timedelta
 
-# Create your views here.
+from .models import Appointment
+from .serializers import (
+    AppointmentSerializer, AppointmentCreateSerializer, QueueStatusSerializer
+)
+
+
+class AppointmentListCreateView(generics.ListCreateAPIView):
+    """
+    List appointments for the authenticated user or create a new appointment.
+    - Patients see their own appointments
+    - Doctors see their appointments
+    """
+    permission_classes = [IsAuthenticated]
+    
+    def get_serializer_class(self):
+        if self.request.method == 'POST':
+            return AppointmentCreateSerializer
+        return AppointmentSerializer
+    
+    def get_queryset(self):
+        user = self.request.user
+        today = timezone.now().date()
+        
+        if user.is_patient:
+            return Appointment.objects.filter(patient=user.patient_profile)
+        elif user.is_doctor:
+            return Appointment.objects.filter(doctor=user.doctor_profile)
+        return Appointment.objects.none()
+
+
+class AppointmentDetailView(generics.RetrieveUpdateAPIView):
+    """Get or update an appointment"""
+    permission_classes = [IsAuthenticated]
+    serializer_class = AppointmentSerializer
+    
+    def get_queryset(self):
+        user = self.request.user
+        if user.is_patient:
+            return Appointment.objects.filter(patient=user.patient_profile)
+        elif user.is_doctor:
+            return Appointment.objects.filter(doctor=user.doctor_profile)
+        return Appointment.objects.none()
+
+
+class StartAppointmentView(views.APIView):
+    """Doctor starts a consultation - sets actual_start_time"""
+    permission_classes = [IsAuthenticated]
+    
+    def post(self, request, pk):
+        if not request.user.is_doctor:
+            return Response({"error": "Only doctors can start appointments"}, status=status.HTTP_403_FORBIDDEN)
+        
+        appointment = get_object_or_404(Appointment, pk=pk, doctor=request.user.doctor_profile)
+        
+        if appointment.status != 'SCHEDULED':
+            return Response({"error": f"Cannot start appointment with status '{appointment.status}'"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        appointment.status = 'IN_PROGRESS'
+        appointment.actual_start_time = timezone.now()
+        appointment.save()
+        
+        return Response({
+            "message": "Appointment started",
+            "appointment": AppointmentSerializer(appointment).data
+        })
+
+
+class CompleteAppointmentView(views.APIView):
+    """Doctor completes a consultation - sets actual_end_time"""
+    permission_classes = [IsAuthenticated]
+    
+    def post(self, request, pk):
+        if not request.user.is_doctor:
+            return Response({"error": "Only doctors can complete appointments"}, status=status.HTTP_403_FORBIDDEN)
+        
+        appointment = get_object_or_404(Appointment, pk=pk, doctor=request.user.doctor_profile)
+        
+        if appointment.status != 'IN_PROGRESS':
+            return Response({"error": f"Cannot complete appointment with status '{appointment.status}'"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        appointment.status = 'COMPLETED'
+        appointment.actual_end_time = timezone.now()
+        appointment.save()
+        
+        return Response({
+            "message": "Appointment completed",
+            "appointment": AppointmentSerializer(appointment).data
+        })
+
+
+class CancelAppointmentView(views.APIView):
+    """Cancel an appointment"""
+    permission_classes = [IsAuthenticated]
+    
+    def post(self, request, pk):
+        user = request.user
+        
+        # Get appointment based on user type
+        if user.is_patient:
+            appointment = get_object_or_404(Appointment, pk=pk, patient=user.patient_profile)
+        elif user.is_doctor:
+            appointment = get_object_or_404(Appointment, pk=pk, doctor=user.doctor_profile)
+        else:
+            return Response({"error": "Unauthorized"}, status=status.HTTP_403_FORBIDDEN)
+        
+        if appointment.status not in ['SCHEDULED', 'IN_PROGRESS']:
+            return Response({"error": f"Cannot cancel appointment with status '{appointment.status}'"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        appointment.status = 'CANCELLED'
+        appointment.save()
+        
+        return Response({
+            "message": "Appointment cancelled",
+            "appointment": AppointmentSerializer(appointment).data
+        })
+
+
+class DoctorQueueView(views.APIView):
+    """Get today's queue for a doctor"""
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request, doctor_id):
+        today = timezone.now().date()
+        
+        appointments = Appointment.objects.filter(
+            doctor_id=doctor_id,
+            scheduled_time__date=today,
+            status__in=['SCHEDULED', 'IN_PROGRESS']
+        ).order_by('scheduled_time')
+        
+        return Response({
+            "doctor_id": doctor_id,
+            "date": today,
+            "queue_count": appointments.count(),
+            "appointments": AppointmentSerializer(appointments, many=True).data
+        })
+
+
+class WaitTimeView(views.APIView):
+    """Get predicted wait time for an appointment"""
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request, pk):
+        appointment = get_object_or_404(Appointment, pk=pk)
+        
+        # Verify access
+        user = request.user
+        if user.is_patient and appointment.patient.user != user:
+            return Response({"error": "Not your appointment"}, status=status.HTTP_403_FORBIDDEN)
+        
+        if appointment.status in ['COMPLETED', 'CANCELLED']:
+            return Response({"error": "Appointment already completed or cancelled"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        if appointment.status == 'IN_PROGRESS':
+            return Response({
+                "queue_position": 0,
+                "people_ahead": 0,
+                "current_status": "in_progress",
+                "message": "Your consultation is in progress"
+            })
+        
+        # Calculate wait time
+        doctor = appointment.doctor
+        today = timezone.now().date()
+        now = timezone.now()
+        
+        # Get average consultation duration from recent completed appointments
+        recent_completed = Appointment.objects.filter(
+            doctor=doctor,
+            status='COMPLETED',
+            actual_start_time__isnull=False,
+            actual_end_time__isnull=False
+        ).order_by('-actual_end_time')[:10]
+        
+        if recent_completed.exists():
+            total_seconds = sum([
+                (a.actual_end_time - a.actual_start_time).total_seconds() 
+                for a in recent_completed
+            ])
+            avg_duration = timedelta(seconds=total_seconds / recent_completed.count())
+        else:
+            # Default to estimated duration
+            avg_duration = appointment.estimated_duration or timedelta(minutes=15)
+        
+        # Count appointments ahead (scheduled before this one, not completed)
+        ahead = Appointment.objects.filter(
+            doctor=doctor,
+            scheduled_time__date=today,
+            scheduled_time__lt=appointment.scheduled_time,
+            status__in=['SCHEDULED', 'IN_PROGRESS']
+        ).count()
+        
+        # If there's an appointment in progress, add remaining time
+        in_progress = Appointment.objects.filter(
+            doctor=doctor,
+            status='IN_PROGRESS'
+        ).first()
+        
+        if in_progress and in_progress.actual_start_time:
+            elapsed = now - in_progress.actual_start_time
+            remaining = max(avg_duration - elapsed, timedelta(0))
+            estimated_wait = remaining + (ahead * avg_duration)
+        else:
+            estimated_wait = ahead * avg_duration
+        
+        # Predict start time
+        predicted_start = now + estimated_wait
+        
+        # Calculate delay from scheduled time
+        delay = predicted_start - appointment.scheduled_time
+        delay_minutes = max(0, delay.total_seconds() / 60)
+        
+        return Response({
+            "queue_position": ahead + 1,
+            "people_ahead": ahead,
+            "avg_consultation_minutes": round(avg_duration.total_seconds() / 60, 1),
+            "estimated_wait_minutes": round(estimated_wait.total_seconds() / 60, 1),
+            "predicted_start_time": predicted_start,
+            "delay_minutes": round(delay_minutes, 1),
+            "current_status": "waiting"
+        })

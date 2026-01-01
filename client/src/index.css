@@ -1,10 +1,23 @@
 @import "tailwindcss";
 
 @theme {
-  --font-family-sans: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  --font-family-sans: 'Inter', system-ui, Avenir, Helvetica, Arial, sans-serif;
+  --color-brand-dark: #071E22;
+  --color-brand-mint: #3AB795;
+  --color-brand-cream: #EAE0D5;
+  --color-brand-red: #DD403A;
 }
 
-/* Custom Global Styles */
 body {
-  @apply bg-gray-50 text-gray-900;
+  @apply bg-brand-dark text-brand-cream antialiased;
+}
+
+@layer utilities {
+  .glass-card {
+    @apply bg-white/5 backdrop-blur-lg border border-white/10 rounded-2xl;
+  }
+
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-emerald-400;
+  }
 }

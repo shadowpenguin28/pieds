@@ -25,7 +25,7 @@ class PatientRegistrationSerializer(serializers.ModelSerializer):
         
         # Call Mock UHI to create ABHA
         from .services import UHIClient
-        abha_data = UHIClient.create_abha(mobile=phone_number, aadhaar=aadhaar)
+        abha_data = UHIClient.create_abha(phone_number=phone_number, aadhaar=aadhaar)
         
         user = User.objects.create_user(
             email=validated_data["email"],
@@ -47,25 +47,29 @@ class PatientRegistrationSerializer(serializers.ModelSerializer):
 class DoctorRegistrationSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
     specialization = serializers.CharField(write_only=True)
-    license_number = serializers.CharField(write_only=True)
     aadhaar = serializers.CharField(write_only=True)
     phone_number = serializers.CharField(required=True)
+    organization_hfr_id = serializers.CharField(write_only=True, required=False, allow_blank=True)
 
     class Meta:
         model = User
-        fields = ["email", "password", "phone_number", "specialization", "license_number", "aadhaar"]
+        fields = ["email", "password", "phone_number", "specialization", "aadhaar", "organization_hfr_id"]
 
     def create(self, validated_data):
         specialization = validated_data.pop("specialization")
-        license_number = validated_data.pop("license_number")
         aadhaar = validated_data.pop("aadhaar")
         phone_number = validated_data["phone_number"]
+        organization_hfr_id = validated_data.pop("organization_hfr_id", None)
+        
+        # Find organization by HFR ID if provided
+        organization = None
+        if organization_hfr_id:
+            from .models import ProviderProfile
+            organization = ProviderProfile.objects.filter(hfr_id=organization_hfr_id).first()
         
         # Call Mock UHI to create HPR
         from .services import UHIClient
-        # We pass a placeholder name or let Mock generate it. 
-        # UHIClient.create_hpr ignores name in current implementation, relying on aadhaar
-        hpr_data = UHIClient.create_hpr(name="", aadhar=aadhaar, specialization=specialization)
+        hpr_data = UHIClient.create_hpr(aadhar=aadhaar, specialization=specialization, phone_number=phone_number)
         
         user = User.objects.create_user(
             email=validated_data["email"],
@@ -77,8 +81,9 @@ class DoctorRegistrationSerializer(serializers.ModelSerializer):
         )
         DoctorProfile.objects.create(
             user=user,
+            hpr_id = hpr_data["hpr_id"],
             specialization=specialization,
-            license_number=license_number
+            organization=organization
         )
         return user
 
@@ -87,6 +92,7 @@ class ProviderRegistrationSerializer(serializers.ModelSerializer):
     type = serializers.ChoiceField(choices=PROVIDER_TYPES, write_only=True)
     name = serializers.CharField(write_only=True)
     address = serializers.CharField(write_only=True)
+    phone_number = serializers.CharField(required=True)
 
     class Meta:
         model = User
@@ -96,16 +102,21 @@ class ProviderRegistrationSerializer(serializers.ModelSerializer):
         provider_type = validated_data.pop("type")
         name = validated_data.pop("name")
         address = validated_data.pop("address")
+        phone_number = validated_data["phone_number"]
+
+        from .services import UHIClient
+        hfr_data = UHIClient.create_hfr(name=name, type=provider_type, address=address, phone_number=phone_number)
         
         user = User.objects.create_user(
             email=validated_data["email"],
             password=validated_data["password"],
-            phone_number=validated_data.get("phone_number"),
+            phone_number=phone_number,
             type="PROVIDER"
         )
         ProviderProfile.objects.create(
             user=user,
             type=provider_type,
+            hfr_id = hfr_data["hfr_id"],
             name=name,
             address=address
         )

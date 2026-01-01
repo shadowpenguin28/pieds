@@ -51,6 +51,13 @@ class PatientProfile(models.Model):
     blood_group = models.CharField(max_length=5, null=True, blank=True)
     gender = models.CharField(max_length=10, null=True, blank=True)
     qr_data_payload = models.TextField(null=True, blank=True, max_length=2056)
+    
+    # Additional fields for hospital form filling
+    address = models.TextField(blank=True)
+    emergency_contact_name = models.CharField(max_length=255, blank=True)
+    emergency_contact_phone = models.CharField(max_length=15, blank=True)
+    allergies = models.TextField(blank=True, help_text="Known allergies")
+    current_medications = models.TextField(blank=True, help_text="Current medications")
 
     def __str__(self):
         return f"Patient: {self.user.email}"
@@ -61,8 +68,18 @@ class DoctorProfile(models.Model):
         User, on_delete=models.CASCADE, related_name="doctor_profile"
     )
     specialization = models.CharField(max_length=100)
-    license_number = models.CharField(max_length=50)
+    hpr_id = models.CharField(max_length=50, unique=True)
     consultation_fee = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    
+    # Organization this doctor is affiliated with
+    organization = models.ForeignKey(
+        'ProviderProfile',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="doctors",
+        help_text="The organization (hospital/clinic) this doctor works at"
+    )
 
     def __str__(self):
         return f"Dr. {self.user.email} - {self.specialization}"
@@ -82,6 +99,7 @@ class ProviderProfile(models.Model):
     type = models.CharField(max_length=50, choices=PROVIDER_TYPES)
     name = models.CharField(max_length=255)
     address = models.TextField()
+    hfr_id = models.CharField(max_length=50)
 
     def __str__(self):
         return f"{self.name} ({self.type})"

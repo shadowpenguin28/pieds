@@ -10,60 +10,43 @@ class UHIClient:
     """
     
     @staticmethod
-    def create_abha(mobile, aadhaar):
+    def create_abha(phone_number, aadhaar):
         url = f"{UHI_MOCK_URL}/v1/abha/create"
-        payload = {"mobile": mobile, "aadhaar": aadhaar}
+        payload = {"phone_number": phone_number, "aadhaar": aadhaar}
         try:
             response = requests.post(url, json=payload, timeout=5)
             response.raise_for_status()
             return response.json()
-        except requests.exceptions.HTTPError as e:
-            # Try to parse the error message from the mock server
-            try:
-                error_msg = response.json().get("error", str(e))
-            except:
-                error_msg = str(e)
-            raise ValidationError(f"Failed to create ABHA: {error_msg}")
         except requests.RequestException as e:
             raise ValidationError(f"Failed to create ABHA: {str(e)}")
 
     @staticmethod
-    def create_hpr(name, aadhar, specialization):
+    def create_hpr(aadhar, specialization, phone_number):
         url = f"{UHI_MOCK_URL}/v1/hpr/create"
         payload = {
-            "aadhar": aadhar, 
-            "specialization": specialization
+            "specialization": specialization,
+            "aadhaar": aadhar,
+            "phone_number": phone_number
         }
         try:
             response = requests.post(url, json=payload, timeout=5)
             response.raise_for_status()
             return response.json()
-        except requests.exceptions.HTTPError as e:
-            try:
-                error_msg = response.json().get("error", str(e))
-            except:
-                error_msg = str(e)
-            raise ValidationError(f"Failed to create HPR ID: {error_msg}")
         except requests.RequestException as e:
             raise ValidationError(f"Failed to create HPR ID: {str(e)}")
 
     @staticmethod
-    def create_hfr(name, type, address):
+    def create_hfr(name, type, address, phone_number):
         url = f"{UHI_MOCK_URL}/v1/hfr/create"
         payload = {
             "name": name, 
             "type": type, 
-            "address": address
+            "address": address,
+            "phone_number": phone_number
         }
         try:
             response = requests.post(url, json=payload, timeout=5)
             response.raise_for_status()
             return response.json()
-        except requests.exceptions.HTTPError as e:
-            try:
-                error_msg = response.json().get("error", str(e))
-            except:
-                error_msg = str(e)
-            raise ValidationError(f"Failed to create HFR ID: {error_msg}")
         except requests.RequestException as e:
             raise ValidationError(f"Failed to create HFR ID: {str(e)}")
