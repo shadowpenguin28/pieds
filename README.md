@@ -62,7 +62,7 @@ Before you begin, ensure you have the following installed:
 ### 1. Clone the Repository
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/shadowpenguin28/pieds.git
 cd pieds
 ```
 
@@ -71,7 +71,7 @@ cd pieds
 #### 2.1 Create Python Virtual Environment
 
 ```bash
-python3 -m venv venv
+python3 -m venv venv # One Windows: python -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 ```
 
@@ -81,36 +81,7 @@ source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-#### 2.3 Configure PostgreSQL Database
-
-Create a PostgreSQL database:
-
-```bash
-psql postgres
-CREATE DATABASE uhi_db;
-CREATE USER uhi_user WITH PASSWORD 'your_password';
-ALTER ROLE uhi_user SET client_encoding TO 'utf8';
-ALTER ROLE uhi_user SET default_transaction_isolation TO 'read committed';
-ALTER ROLE uhi_user SET timezone TO 'UTC';
-GRANT ALL PRIVILEGES ON DATABASE uhi_db TO uhi_user;
-\q
-```
-
-#### 2.4 Environment Variables
-
-Create `.env` file in the `core/` directory:
-
-```env
-SECRET_KEY=your-secret-key-here
-DEBUG=True
-DATABASE_NAME=uhi_db
-DATABASE_USER=uhi_user
-DATABASE_PASSWORD=your_password
-DATABASE_HOST=localhost
-DATABASE_PORT=5432
-```
-
-#### 2.5 Run Migrations
+#### 2.3 Run Migrations
 
 ```bash
 cd core
@@ -118,22 +89,11 @@ python manage.py makemigrations
 python manage.py migrate
 ```
 
-#### 2.6 Create Superuser (Optional)
-
-```bash
-python manage.py createsuperuser
-```
-
-#### 2.7 Load Test Data (Optional)
-
-```bash
-python manage.py loaddata fixtures/test_data.json  # If available
-```
-
 ### 3. UHI Mock Server Setup
 
 ```bash
 cd uhi_mock_server
+python manage.py makemigrations
 python manage.py migrate
 ```
 
