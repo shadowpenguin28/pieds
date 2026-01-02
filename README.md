@@ -5,27 +5,27 @@ A comprehensive healthcare platform implementing the Unified Health Interface (U
 ## 🎯 Features
 
 ### Patient Portal
-- 📱 Digital QR Code for instant identification
-- 📅 Book & manage appointments with doctors
-- 💰 Integrated wallet system for payments
-- 🏥 Health journey tracking with lab reports
-- 🔐 Consent-based data sharing
-- ⏱️ Real-time queue position & wait time
+- Digital QR Code for instant identification
+- Book & manage appointments with doctors
+- Integrated wallet system for payments
+- Health journey tracking with lab reports
+- Consent-based data sharing
+- Real-time queue position & wait time
 
 ### Doctor Portal
-- 📋 Today's queue management
-- 📸 Scan patient QR codes (camera/file upload)
-- 💼 Appointments & consultation management
-- 📊 Access patient health records (with consent)
-- 💳 Wallet & earnings tracking
-- ⚙️ Profile management with consultation fees
+- Today's queue management
+- Scan patient QR codes (camera/file upload)
+- Appointments & consultation management
+- Access patient health records (with consent)
+- Wallet & earnings tracking
+- Profile management with consultation fees
 
 ### Provider Portal (Hospital/Lab/Pharmacy)
-- 🏥 Manage affiliated doctors
-- 📄 Upload lab reports & medical documents
-- 🔍 Scan patient QR for record access
-- 💰 Revenue tracking
-- 👥 Organization doctor management
+- Manage affiliated doctors
+- Upload lab reports & medical documents
+- Scan patient QR for record access
+- Revenue tracking
+- Organization doctor management
 
 ---
 
@@ -34,7 +34,6 @@ A comprehensive healthcare platform implementing the Unified Health Interface (U
 **Backend:**
 - Django 5.1.4
 - Django REST Framework 3.15.2
-- PostgreSQL
 - JWT Authentication (simplejwt)
 - Python 3.11+
 
