@@ -20,6 +20,7 @@ class Appointment(models.Model):
     journey_step = models.OneToOneField(JourneyStep, on_delete=models.SET_NULL, null=True, blank=True, related_name="appointment_link")
     estimated_duration = models.DurationField(default=timedelta(minutes=15))
     created_at = models.DateTimeField(auto_now_add=True)
+    is_paid = models.BooleanField(default=False, help_text="Whether the consultation fee has been paid")
     
     # Actual timing for wait time prediction
     actual_start_time = models.DateTimeField(null=True, blank=True, help_text="When doctor started consultation")

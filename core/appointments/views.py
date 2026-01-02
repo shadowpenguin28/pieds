@@ -34,6 +34,13 @@ class AppointmentListCreateView(generics.ListCreateAPIView):
         elif user.is_doctor:
             return Appointment.objects.filter(doctor=user.doctor_profile)
         return Appointment.objects.none()
+    
+    def perform_create(self, serializer):
+        """Auto-set patient from the authenticated user"""
+        if not self.request.user.is_patient:
+            from rest_framework.exceptions import PermissionDenied
+            raise PermissionDenied("Only patients can create appointments")
+        serializer.save(patient=self.request.user.patient_profile)
 
 
 class AppointmentDetailView(generics.RetrieveUpdateAPIView):
@@ -97,7 +104,7 @@ class CompleteAppointmentView(views.APIView):
 
 
 class CancelAppointmentView(views.APIView):
-    """Cancel an appointment"""
+    """Cancel an appointment and refund if paid"""
     permission_classes = [IsAuthenticated]
     
     def post(self, request, pk):
@@ -114,13 +121,58 @@ class CancelAppointmentView(views.APIView):
         if appointment.status not in ['SCHEDULED', 'IN_PROGRESS']:
             return Response({"error": f"Cannot cancel appointment with status '{appointment.status}'"}, status=status.HTTP_400_BAD_REQUEST)
         
+        refund_amount = None
+        cancellation_fee = None
+        
+        # Process refund if appointment was paid (with 5% cancellation fee)
+        if appointment.is_paid:
+            from payments.models import Wallet
+            from decimal import Decimal, ROUND_HALF_UP
+            
+            full_amount = appointment.doctor.consultation_fee
+            
+            # Calculate 5% cancellation fee and 95% refund
+            fee_rate = Decimal('0.05')
+            cancellation_fee = (full_amount * fee_rate).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+            refund = full_amount - cancellation_fee
+            
+            # Refund to patient (95%)
+            patient_wallet, _ = Wallet.objects.get_or_create(user=appointment.patient.user)
+            patient_wallet.credit(
+                amount=refund,
+                reason="REFUND",
+                appointment=appointment,
+                description=f"Refund for cancelled appointment (5% cancellation fee deducted)"
+            )
+            
+            # Debit from doctor (only the refund portion, doctor keeps the 5% fee)
+            doctor_wallet, _ = Wallet.objects.get_or_create(user=appointment.doctor.user)
+            if doctor_wallet.balance >= refund:
+                doctor_wallet.debit(
+                    amount=refund,
+                    reason="REFUND",
+                    appointment=appointment,
+                    description=f"Refund to {appointment.patient.user.first_name} (kept ₹{cancellation_fee} cancellation fee)"
+                )
+            
+            refund_amount = str(refund)
+            cancellation_fee = str(cancellation_fee)
+            appointment.is_paid = False
+        
         appointment.status = 'CANCELLED'
         appointment.save()
         
-        return Response({
+        response_data = {
             "message": "Appointment cancelled",
             "appointment": AppointmentSerializer(appointment).data
-        })
+        }
+        
+        if refund_amount:
+            response_data["refund_amount"] = refund_amount
+            response_data["cancellation_fee"] = cancellation_fee
+            response_data["message"] = f"Appointment cancelled. ₹{refund_amount} refunded (5% cancellation fee: ₹{cancellation_fee})"
+        
+        return Response(response_data)
 
 
 class DoctorQueueView(views.APIView):

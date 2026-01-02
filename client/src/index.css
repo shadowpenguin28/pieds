@@ -2,10 +2,22 @@
 
 @theme {
   --font-family-sans: 'Inter', system-ui, Avenir, Helvetica, Arial, sans-serif;
+
+  /* Primary Palette */
   --color-brand-dark: #071E22;
+  /* Ink Black - Background */
   --color-brand-mint: #3AB795;
+  /* Mint Leaf - Primary accent */
   --color-brand-cream: #EAE0D5;
+  /* Almond Cream - Text/Light */
   --color-brand-red: #DD403A;
+  /* Cinnabar - Error/Alert */
+
+  /* Derived Colors */
+  --color-brand-slate: #0D2F35;
+  /* Lighter dark for cards */
+  --color-brand-teal: #2D9B7A;
+  /* Darker mint */
 }
 
 body {
@@ -14,10 +26,18 @@ body {
 
 @layer utilities {
   .glass-card {
-    @apply bg-white/5 backdrop-blur-lg border border-white/10 rounded-2xl;
+    @apply bg-brand-slate/50 backdrop-blur-lg border border-brand-cream/10 rounded-2xl;
   }
 
   .text-gradient {
-    @apply bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-emerald-400;
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-brand-mint to-brand-teal;
+  }
+
+  .btn-primary {
+    @apply bg-gradient-to-r from-brand-mint to-brand-teal text-brand-dark font-semibold rounded-xl hover:opacity-90 transition-opacity;
+  }
+
+  .btn-danger {
+    @apply bg-brand-red/20 text-brand-red border border-brand-red/30 rounded-xl hover:bg-brand-red/30 transition-colors;
   }
 }

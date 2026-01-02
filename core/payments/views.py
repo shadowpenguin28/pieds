@@ -108,6 +108,10 @@ class AppointmentPaymentView(views.APIView):
             description=f"Payment received from {appointment.patient.user.first_name}"
         )
         
+        # Mark appointment as paid
+        appointment.is_paid = True
+        appointment.save()
+        
         return Response({
             "message": "Payment successful",
             "amount": str(amount),

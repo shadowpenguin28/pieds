@@ -204,7 +204,8 @@ class ConsentRespondView(views.APIView):
 class FetchJourneysByAbhaView(views.APIView):
     """
     Fetch all journeys for a patient by ABHA ID.
-    Only returns data if consent is granted.
+    Only returns data if consent is granted (for doctors).
+    Providers can access for report uploads.
     """
     permission_classes = [IsAuthenticated]
     
@@ -241,6 +242,11 @@ class FetchJourneysByAbhaView(views.APIView):
                 }, status=status.HTTP_403_FORBIDDEN)
             
             # Return all journeys (with consent, they can see everything)
+            journeys = Journey.objects.filter(patient=patient)
+        
+        elif user.is_provider:
+            # Providers (labs) can look up patients by ABHA ID to upload reports
+            # The patient implicitly consents by providing their ABHA ID at the lab
             journeys = Journey.objects.filter(patient=patient)
         
         else:

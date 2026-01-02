@@ -1,19 +1,25 @@
 from django.urls import path
-from rest_framework_simplejwt.views import (
-    TokenObtainPairView,
-    TokenRefreshView,
-)
+from rest_framework_simplejwt.views import TokenRefreshView
 from .views import (
     PatientRegisterView, DoctorRegisterView, ProviderRegistrationView,
-    PatientQRCodeView, GetQRDataView, QRScanView
+    PatientQRCodeView, GetQRDataView, QRScanView, CustomTokenObtainPairView,
+    DoctorListView, ProfileView, ChangePasswordView, OrganizationDoctorsView
 )
 
 urlpatterns = [
     path("register/patient/", PatientRegisterView.as_view(), name="register_patient"),
     path("register/doctor/", DoctorRegisterView.as_view(), name="register_doctor"),
     path("register/provider/", ProviderRegistrationView.as_view(), name="register_provider"),
-    path("login/", TokenObtainPairView.as_view(), name="token_obtain_pair"),
+    path("login/", CustomTokenObtainPairView.as_view(), name="token_obtain_pair"),
     path("token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
+    path("doctors/", DoctorListView.as_view(), name="doctor_list"),
+    
+    # Profile endpoints
+    path("profile/", ProfileView.as_view(), name="profile"),
+    path("profile/change-password/", ChangePasswordView.as_view(), name="change_password"),
+    
+    # Organization management
+    path("organization/doctors/", OrganizationDoctorsView.as_view(), name="organization_doctors"),
     
     # QR Code endpoints
     path("patients/me/qr-code/", PatientQRCodeView.as_view(), name="patient_qr_code"),

@@ -582,6 +582,202 @@ Returns report metadata and download URL.
 
 ---
 
+## Profile APIs (`/api/auth/profile/`)
+
+### Get Profile
+```
+GET /api/auth/profile/
+```
+🔐 **Auth Required**
+
+Returns current user profile with type-specific fields.
+
+**Response (Patient):**
+```json
+{
+  "id": 1,
+  "email": "patient@test.com",
+  "first_name": "Om",
+  "last_name": "Bhalla",
+  "phone_number": "9876543210",
+  "type": "PATIENT",
+  "profile": {
+    "abha_id": "Om_Bhalla.2367@uhi",
+    "dob": "1990-01-15",
+    "gender": "Male",
+    "blood_group": "O+",
+    "address": "123 Main St",
+    "emergency_contact_name": "Wife",
+    "emergency_contact_phone": "9876543211",
+    "allergies": "Penicillin",
+    "current_medications": ""
+  }
+}
+```
+
+**Response (Doctor):**
+```json
+{
+  "id": 2,
+  "email": "doctor@test.com",
+  "first_name": "Gabriel",
+  "last_name": "Sood",
+  "phone_number": "9876543211",
+  "type": "DOCTOR",
+  "profile": {
+    "hpr_id": "HPR-12345",
+    "specialization": "Cardiology",
+    "consultation_fee": "500.00",
+    "organization": "Apollo Hospital"
+  }
+}
+```
+
+**Response (Provider):**
+```json
+{
+  "id": 3,
+  "email": "provider@test.com",
+  "first_name": "Admin",
+  "last_name": "",
+  "phone_number": "9876543212",
+  "type": "PROVIDER",
+  "profile": {
+    "hfr_id": "HFR-12345",
+    "name": "Apollo Hospital",
+    "type": "HOSPITAL",
+    "address": "Mumbai, Maharashtra"
+  }
+}
+```
+
+---
+
+### Update Profile
+```
+PATCH /api/auth/profile/
+```
+🔐 **Auth Required**
+
+Updates user profile fields.
+
+**Request Body:**
+```json
+{
+  "first_name": "Updated Name",
+  "last_name": "Updated",
+  "phone_number": "9999999999",
+  "profile": {
+    "specialization": "Neurology",
+    "consultation_fee": "600.00"
+  }
+}
+```
+
+**Response:**
+```json
+{"message": "Profile updated successfully"}
+```
+
+---
+
+### Change Password
+```
+POST /api/auth/profile/change-password/
+```
+🔐 **Auth Required**
+
+**Request Body:**
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| current_password | string | ✅ | Current password |
+| new_password | string | ✅ | New password (min 8 chars) |
+
+**Response:**
+```json
+{"message": "Password changed successfully"}
+```
+
+---
+
+## Organization APIs (`/api/auth/organization/`)
+
+### List Affiliated Doctors
+```
+GET /api/auth/organization/doctors/
+```
+🔐 **Auth Required:** Provider only
+
+Returns list of doctors affiliated with the provider organization.
+
+**Response:**
+```json
+{
+  "doctors": [
+    {
+      "id": 1,
+      "name": "Dr. Gabriel Sood",
+      "email": "doctor@test.com",
+      "specialization": "Cardiology",
+      "hpr_id": "HPR-12345",
+      "consultation_fee": "500.00"
+    }
+  ]
+}
+```
+
+---
+
+### Add Doctor to Organization
+```
+POST /api/auth/organization/doctors/
+```
+🔐 **Auth Required:** Provider only
+
+Adds a doctor by HPR ID or email.
+
+**Request Body:**
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| hpr_id | string | ❌ | Doctor's HPR ID |
+| email | string | ❌ | Doctor's email |
+
+*At least one of hpr_id or email is required.*
+
+**Response:**
+```json
+{
+  "message": "Dr. Gabriel Sood has been added to your organization",
+  "doctor": {
+    "id": 1,
+    "name": "Dr. Gabriel Sood",
+    "email": "doctor@test.com",
+    "specialization": "Cardiology",
+    "hpr_id": "HPR-12345"
+  }
+}
+```
+
+---
+
+### Remove Doctor from Organization
+```
+DELETE /api/auth/organization/doctors/
+```
+🔐 **Auth Required:** Provider only
+
+**Request Body:**
+```json
+{"doctor_id": 1}
+```
+
+**Response:**
+```json
+{"message": "Doctor has been removed from your organization"}
+```
+
+---
+
 ## Error Responses
 
 All endpoints return errors in this format:
@@ -596,3 +792,4 @@ All endpoints return errors in this format:
 | 403 | Forbidden - Not allowed for this user type |
 | 404 | Not Found |
 | 500 | Server Error |
+
