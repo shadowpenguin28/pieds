@@ -70,9 +70,15 @@ cd pieds
 
 #### 2.1 Create Python Virtual Environment
 
+macos
 ```bash
-python3 -m venv venv # One Windows: python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+python3 -m venv venv
+source venv/bin/activate
+```
+windows
+```
+python -m venv venv
+source venv\Scripts\activate
 ```
 
 #### 2.2 Install Dependencies
@@ -92,6 +98,7 @@ python manage.py migrate
 ### 3. UHI Mock Server Setup
 
 ```bash
+cd .. # Switch back to the root directory: pieds
 cd uhi_mock_server
 python manage.py makemigrations
 python manage.py migrate
@@ -100,6 +107,7 @@ python manage.py migrate
 ### 4. Frontend Setup
 
 ```bash
+cd .. # Switch back to the root directory: pieds
 cd client
 npm install
 ```
@@ -110,25 +118,36 @@ npm install
 
 You need to run **3 separate servers** in different terminal windows:
 
+Before starting the dev servers, ensure python virtual environment is activated via: 
+
+macos
+```bash
+python3 -m venv venv
+source venv/bin/activate
+```
+windows
+```
+python -m venv venv
+source venv\Scripts\activate
+```
+
 ### Terminal 1: Main Backend Server
 
 ```bash
 cd core
-source ../venv/bin/activate  # Activate virtual environment
 python manage.py runserver
 ```
 
-Server runs on: **http://localhost:8000**
+Core backend Server runs on: **http://localhost:8000**
 
 ### Terminal 2: UHI Mock Server
 
 ```bash
 cd uhi_mock_server
-source ../venv/bin/activate
 python manage.py runserver 8001
 ```
 
-Server runs on: **http://localhost:8001**
+UHI Mock Server runs on: **http://localhost:8001**
 
 ### Terminal 3: Frontend Development Server
 
@@ -137,7 +156,7 @@ cd client
 npm run dev
 ```
 
-Application runs on: **http://localhost:5174**
+Frontend Application runs on: **http://localhost:5174**
 
 ---
 
