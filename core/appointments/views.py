@@ -233,49 +233,90 @@ class WaitTimeView(views.APIView):
         ).order_by('-actual_end_time')[:10]
         
         if recent_completed.exists():
-            total_seconds = sum([
+            durations = [
                 (a.actual_end_time - a.actual_start_time).total_seconds() 
                 for a in recent_completed
-            ])
-            avg_duration = timedelta(seconds=total_seconds / recent_completed.count())
+            ]
+            avg_seconds = sum(durations) / len(durations)
+            # Ensure minimum of 15 minutes
+            avg_duration = timedelta(seconds=max(avg_seconds, 900))
         else:
-            # Default to estimated duration
-            avg_duration = appointment.estimated_duration or timedelta(minutes=15)
+            # Default to 15 minutes per consultation when no historical data is available
+            avg_duration = timedelta(minutes=15)
         
         # Count appointments ahead (scheduled before this one, not completed)
+        # Use the appointment's scheduled date, not today's date
+        from datetime import datetime, time
+        appt_date = appointment.scheduled_time.date()
+        start_of_day = timezone.make_aware(datetime.combine(appt_date, time.min))
+        end_of_day = timezone.make_aware(datetime.combine(appt_date, time.max))
+        
         ahead = Appointment.objects.filter(
             doctor=doctor,
-            scheduled_time__date=today,
+            scheduled_time__gte=start_of_day,
+            scheduled_time__lte=end_of_day,
             scheduled_time__lt=appointment.scheduled_time,
             status__in=['SCHEDULED', 'IN_PROGRESS']
-        ).count()
+        ).exclude(id=appointment.id).count()
         
-        # If there's an appointment in progress, add remaining time
+        # Calculate predicted start time based on queue
+        # Check if there's an appointment in progress
         in_progress = Appointment.objects.filter(
             doctor=doctor,
             status='IN_PROGRESS'
         ).first()
         
         if in_progress and in_progress.actual_start_time:
+            # There's an active consultation
             elapsed = now - in_progress.actual_start_time
             remaining = max(avg_duration - elapsed, timedelta(0))
-            estimated_wait = remaining + (ahead * avg_duration)
+            # Predicted start = remaining time + time for people ahead
+            predicted_start = now + remaining + (ahead * avg_duration)
         else:
-            estimated_wait = ahead * avg_duration
+            # No active consultation
+            # Get the earliest scheduled appointment for this doctor on this day
+            earliest_appt = Appointment.objects.filter(
+                doctor=doctor,
+                scheduled_time__gte=start_of_day,
+                scheduled_time__lte=end_of_day,
+                status='SCHEDULED'
+            ).order_by('scheduled_time').first()
+            
+            if earliest_appt:
+                # Start from the earliest scheduled time
+                base_start = max(now, earliest_appt.scheduled_time)
+                # Calculate based on queue position from earliest
+                all_ahead = Appointment.objects.filter(
+                    doctor=doctor,
+                    scheduled_time__gte=start_of_day,
+                    scheduled_time__lte=end_of_day,
+                    scheduled_time__lt=appointment.scheduled_time,
+                    status='SCHEDULED'
+                ).exclude(id=appointment.id).count()
+                predicted_start = base_start + (all_ahead * avg_duration)
+            else:
+                # No other appointments, use scheduled time
+                predicted_start = appointment.scheduled_time
         
-        # Predict start time
-        predicted_start = now + estimated_wait
-        
-        # Calculate delay from scheduled time
-        delay = predicted_start - appointment.scheduled_time
-        delay_minutes = max(0, delay.total_seconds() / 60)
+        # Calculate wait time as delay beyond scheduled time
+        if predicted_start <= appointment.scheduled_time:
+            # Running on time or early - no wait
+            estimated_wait_minutes = 0.0
+            predicted_start = appointment.scheduled_time
+            delay_minutes = 0.0
+        else:
+            # Running late - show delay
+            delay = predicted_start - appointment.scheduled_time
+            delay_minutes = delay.total_seconds() / 60
+            estimated_wait_minutes = delay_minutes
         
         return Response({
             "queue_position": ahead + 1,
             "people_ahead": ahead,
             "avg_consultation_minutes": round(avg_duration.total_seconds() / 60, 1),
-            "estimated_wait_minutes": round(estimated_wait.total_seconds() / 60, 1),
+            "estimated_wait_minutes": round(estimated_wait_minutes, 1),
             "predicted_start_time": predicted_start,
             "delay_minutes": round(delay_minutes, 1),
             "current_status": "waiting"
         })
+

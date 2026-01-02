@@ -15,6 +15,7 @@ import BookAppointment from './BookAppointment';
 import HealthJourneys from './HealthJourneys';
 import Consents from './Consents';
 import Profile from '../shared/Profile';
+import WaitTime from './WaitTime';
 
 // Sub-pages (inline for now)
 function Overview() {
@@ -252,6 +253,7 @@ export default function PatientDashboard() {
                         <Route path="qr" element={<PatientQR />} />
                         <Route path="appointments" element={<PatientAppointments />} />
                         <Route path="appointments/book" element={<BookAppointment />} />
+                        <Route path="wait-time/:appointmentId" element={<WaitTime />} />
                         <Route path="journeys" element={<HealthJourneys />} />
                         <Route path="consents" element={<Consents />} />
                         <Route path="wallet" element={<PatientWallet />} />

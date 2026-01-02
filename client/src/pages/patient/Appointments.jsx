@@ -58,7 +58,7 @@ export default function PatientAppointments() {
     };
 
     const requestCancel = (appointmentId) => {
-    setCancelTarget(appointmentId);
+        setCancelTarget(appointmentId);
     };
 
     const confirmCancel = async () => {
@@ -200,54 +200,55 @@ export default function PatientAppointments() {
 
                                     {appt.status === 'SCHEDULED' && (
                                         <button
-                                            onClick={() => window.location.href = `/patient/wait-time/${appt.id}`}
+                                            onClick={() => navigate(`/patient/wait-time/${appt.id}`)}
                                             className="px-4 py-2.5 bg-brand-dark/50 border border-brand-cream/20 rounded-lg hover:border-brand-mint transition-colors"
                                         >
                                             <Clock className="w-4 h-4" />
                                         </button>
-                                    )} 
+                                    )}
 
-                                    
+
+
 
                                 </div>
                             </div>
                         );
-                        
+
                     })}
                 </div>
             )}
-        {/* Cancel Confirmation Modal */}
-        {cancelTarget && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-                <div className="bg-brand-dark rounded-xl p-6 w-full max-w-sm border border-brand-cream/20">
-                    <h3 className="text-lg font-semibold mb-2">
-                        Cancel Appointment?
-                    </h3>
-                    <p className="text-sm text-brand-cream/70 mb-6">
-                        This action cannot be undone.
-                    </p>
+            {/* Cancel Confirmation Modal */}
+            {cancelTarget && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+                    <div className="bg-brand-dark rounded-xl p-6 w-full max-w-sm border border-brand-cream/20">
+                        <h3 className="text-lg font-semibold mb-2">
+                            Cancel Appointment?
+                        </h3>
+                        <p className="text-sm text-brand-cream/70 mb-6">
+                            This action cannot be undone.
+                        </p>
 
-                    <div className="flex gap-3">
-                        <button
-                            onClick={() => setCancelTarget(null)}
-                            className="flex-1 py-2 rounded-lg border border-brand-cream/20 hover:bg-brand-slate/50"
-                        >
-                            No
-                        </button>
-                        <button
-                            onClick={confirmCancel}
-                            className="flex-1 py-2 rounded-lg bg-brand-red text-white hover:opacity-90"
-                        >
-                            Yes, Cancel
-                        </button>
+                        <div className="flex gap-3">
+                            <button
+                                onClick={() => setCancelTarget(null)}
+                                className="flex-1 py-2 rounded-lg border border-brand-cream/20 hover:bg-brand-slate/50"
+                            >
+                                No
+                            </button>
+                            <button
+                                onClick={confirmCancel}
+                                className="flex-1 py-2 rounded-lg bg-brand-red text-white hover:opacity-90"
+                            >
+                                Yes, Cancel
+                            </button>
+                        </div>
                     </div>
                 </div>
-            </div>
-        )}
+            )}
 
         </div>
 
-        
+
     );
-    
+
 }
