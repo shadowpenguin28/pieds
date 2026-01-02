@@ -396,6 +396,192 @@ GET /api/appointments/{id}/wait-time/
 
 ---
 
+## Wallet APIs (`/api/wallet/`)
+
+### Get Wallet Balance
+```
+GET /api/wallet/
+```
+🔐 **Auth Required**
+
+Returns current wallet balance and recent transactions.
+
+**Response:**
+```json
+{
+  "id": 1,
+  "balance": "500.00",
+  "created_at": "2026-01-02T06:03:52Z",
+  "updated_at": "2026-01-02T06:03:53Z",
+  "recent_transactions": [
+    {"id": 1, "amount": "500.00", "type": "CREDIT", "reason": "TOP_UP", ...}
+  ]
+}
+```
+
+---
+
+### Top Up Wallet
+```
+POST /api/wallet/topup/
+```
+🔐 **Auth Required**
+
+Adds funds to wallet (mock payment for MVP demo).
+
+**Request Body:**
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| amount | decimal | ✅ | Amount to add (min: 1) |
+
+**Example:**
+```bash
+curl -X POST http://localhost:8000/api/wallet/topup/ \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"amount": 500}'
+```
+
+**Response:**
+```json
+{
+  "message": "₹500.00 added to wallet",
+  "new_balance": 500.0,
+  "transaction": {"id": 1, "amount": "500.00", "type": "CREDIT", "reason": "TOP_UP", ...}
+}
+```
+
+---
+
+### Get Transaction History
+```
+GET /api/wallet/transactions/
+```
+🔐 **Auth Required**
+
+Returns all transactions for the authenticated user's wallet.
+
+**Response:**
+```json
+[
+  {"id": 1, "amount": "500.00", "type": "CREDIT", "reason": "TOP_UP", "appointment": null, "description": "Wallet top-up", "created_at": "..."},
+  {"id": 2, "amount": "200.00", "type": "DEBIT", "reason": "PAYMENT_DONE", "appointment": 2, "description": "Payment for appointment with Dr. X", "created_at": "..."}
+]
+```
+
+**Transaction Reasons:**
+| Reason | Description |
+|--------|-------------|
+| `TOP_UP` | Money added to wallet |
+| `PAYMENT_DONE` | Payment made by user |
+| `PAYMENT_RECEIVED` | Payment received by user |
+| `REFUND` | Refund processed |
+| `WITHDRAWAL` | Withdrawal from wallet |
+
+---
+
+### Pay for Appointment
+```
+POST /api/wallet/appointments/{id}/pay/
+```
+🔐 **Auth Required:** Patient only
+
+Pays for an appointment using wallet balance. Transfers funds from patient to doctor.
+
+**Response (Success):**
+```json
+{
+  "message": "Payment successful",
+  "amount": "200.00",
+  "patient_new_balance": "300.00"
+}
+```
+
+**Response (Insufficient Balance):**
+```json
+{
+  "error": "Insufficient balance",
+  "required": "200.00",
+  "available": "100.00"
+}
+```
+
+---
+
+### Refund Appointment
+```
+POST /api/wallet/appointments/{id}/refund/
+```
+🔐 **Auth Required**
+
+Refunds a cancelled appointment. Returns funds from doctor to patient.
+
+**Response:**
+```json
+{
+  "message": "Refund processed",
+  "amount": "200.00",
+  "patient_new_balance": "500.00"
+}
+```
+
+---
+
+## Lab Report APIs (`/api/journeys/steps/`)
+
+### Upload Report
+```
+POST /api/journeys/steps/{step_id}/report/
+```
+🔐 **Auth Required:** Provider (LAB/HOSPITAL) only
+
+Uploads a medical report file for a TEST type journey step.
+
+**Request:** `multipart/form-data`
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| file | file | ✅ | Report file (PDF, image, etc.) |
+| data | JSON | ❌ | Parsed report data |
+
+**Example:**
+```bash
+curl -X POST http://localhost:8000/api/journeys/steps/2/report/ \
+  -H "Authorization: Bearer $LAB_TOKEN" \
+  -F "file=@/path/to/report.pdf"
+```
+
+**Response:**
+```json
+{
+  "message": "Report uploaded successfully",
+  "report_id": 1,
+  "file_url": "http://localhost:8000/media/reports/report.pdf"
+}
+```
+
+---
+
+### Download Report
+```
+GET /api/journeys/steps/{step_id}/report/download/
+```
+🔐 **Auth Required:** Patient (own report), Doctor (with consent), Provider (own uploads)
+
+Returns report metadata and download URL.
+
+**Response:**
+```json
+{
+  "report_id": 1,
+  "step_id": 2,
+  "provider": "TestLab Diagnostics",
+  "file_url": "http://localhost:8000/media/reports/report.pdf",
+  "data": null
+}
+```
+
+---
+
 ## Error Responses
 
 All endpoints return errors in this format:

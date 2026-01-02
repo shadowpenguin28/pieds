@@ -252,3 +252,114 @@ class FetchJourneysByAbhaView(views.APIView):
             "patient_name": f"{patient.user.first_name} {patient.user.last_name}",
             "journeys": serializer.data
         })
+
+
+# ============ Lab Report APIs ============
+
+from rest_framework.parsers import MultiPartParser, FormParser
+from .models import MedicalReport
+
+class ReportUploadView(views.APIView):
+    """
+    Upload a medical report file for a journey step.
+    Only providers (labs, hospitals) can upload reports.
+    """
+    permission_classes = [IsAuthenticated]
+    parser_classes = [MultiPartParser, FormParser]
+    
+    def post(self, request, step_id):
+        if not request.user.is_provider:
+            return Response({"error": "Only providers can upload reports"}, status=status.HTTP_403_FORBIDDEN)
+        
+        step = get_object_or_404(JourneyStep, pk=step_id)
+        
+        # Verify step type is TEST
+        if step.type != 'TEST':
+            return Response({"error": "Reports can only be uploaded for TEST type steps"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Check if report already exists
+        if hasattr(step, 'report') and step.report:
+            return Response({"error": "Report already exists for this step"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        file = request.FILES.get('file')
+        if not file:
+            return Response({"error": "No file provided"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Get optional parsed data
+        data = request.data.get('data')
+        parsed_data = None
+        if data:
+            import json
+            try:
+                parsed_data = json.loads(data)
+            except json.JSONDecodeError:
+                pass
+        
+        # Create report
+        report = MedicalReport.objects.create(
+            step=step,
+            provider=request.user.provider_profile,
+            file=file,
+            data=parsed_data
+        )
+        
+        return Response({
+            "message": "Report uploaded successfully",
+            "report_id": report.id,
+            "file_url": request.build_absolute_uri(report.file.url) if report.file else None
+        }, status=status.HTTP_201_CREATED)
+
+
+class ReportDownloadView(views.APIView):
+    """
+    Download/view a medical report for a journey step.
+    Patients can view their own reports.
+    Doctors with consent can view patient reports.
+    """
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request, step_id):
+        step = get_object_or_404(JourneyStep, pk=step_id)
+        
+        if not hasattr(step, 'report') or not step.report:
+            return Response({"error": "No report found for this step"}, status=status.HTTP_404_NOT_FOUND)
+        
+        report = step.report
+        user = request.user
+        
+        # Check access
+        if user.is_patient:
+            if step.journey.patient.user != user:
+                return Response({"error": "Not your report"}, status=status.HTTP_403_FORBIDDEN)
+        
+        elif user.is_doctor:
+            doctor = user.doctor_profile
+            org = doctor.organization
+            
+            # Check consent
+            has_consent = HealthDataConsent.objects.filter(
+                patient=step.journey.patient,
+                requesting_org=org,
+                status='GRANTED'
+            ).exists()
+            
+            journey_from_own_org = step.journey.created_by_org == org
+            
+            if not (journey_from_own_org or has_consent):
+                return Response({"error": "Consent required"}, status=status.HTTP_403_FORBIDDEN)
+        
+        elif user.is_provider:
+            # Provider can view reports they created
+            if report.provider.user != user:
+                return Response({"error": "Not your report"}, status=status.HTTP_403_FORBIDDEN)
+        
+        else:
+            return Response({"error": "Unauthorized"}, status=status.HTTP_403_FORBIDDEN)
+        
+        return Response({
+            "report_id": report.id,
+            "step_id": step.id,
+            "provider": report.provider.name if report.provider else None,
+            "file_url": request.build_absolute_uri(report.file.url) if report.file else None,
+            "data": report.data
+        })

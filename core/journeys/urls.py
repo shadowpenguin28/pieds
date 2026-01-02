@@ -2,7 +2,7 @@ from django.urls import path
 from .views import (
     JourneyListCreateView, JourneyDetailView, JourneyStepCreateView,
     RequestAccessByAbhaView, PatientConsentListView, ConsentRespondView,
-    FetchJourneysByAbhaView
+    FetchJourneysByAbhaView, ReportUploadView, ReportDownloadView
 )
 
 urlpatterns = [
@@ -16,4 +16,8 @@ urlpatterns = [
     path('my-consents/', PatientConsentListView.as_view(), name='patient_consents'),
     path('consent/<int:consent_id>/respond/', ConsentRespondView.as_view(), name='consent_respond'),
     path('by-abha/<str:abha_id>/', FetchJourneysByAbhaView.as_view(), name='fetch_by_abha'),
+    
+    # Lab Reports
+    path('steps/<int:step_id>/report/', ReportUploadView.as_view(), name='report_upload'),
+    path('steps/<int:step_id>/report/download/', ReportDownloadView.as_view(), name='report_download'),
 ]
