@@ -143,3 +143,20 @@ class ConsentRequestSerializer(serializers.Serializer):
 class ConsentResponseSerializer(serializers.Serializer):
     """For patient to grant/deny consent"""
     status = serializers.ChoiceField(choices=['GRANTED', 'DENIED'])
+
+
+# ============ Doctor Action Serializers ============
+
+class OrderTestSerializer(serializers.Serializer):
+    """Doctor orders a test for a patient within a journey"""
+    journey_id = serializers.IntegerField()
+    test_name = serializers.CharField(max_length=255)
+    notes = serializers.CharField(required=False, allow_blank=True)
+
+
+class WritePrescriptionSerializer(serializers.Serializer):
+    """Doctor writes a prescription within a journey"""
+    journey_id = serializers.IntegerField()
+    medications = serializers.JSONField(help_text="List of medications with dosage")
+    notes = serializers.CharField(required=False, allow_blank=True)
+

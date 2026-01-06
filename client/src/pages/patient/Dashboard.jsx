@@ -211,8 +211,8 @@ export default function PatientDashboard() {
         <div className="max-w-7xl mx-auto px-4 py-8">
             <div className="flex gap-8">
                 {/* Sidebar */}
-                <aside className="w-64 flex-shrink-0 hidden lg:block">
-                    <nav className="bg-brand-slate/50 rounded-xl p-4 border border-brand-cream/10 sticky top-24">
+                <aside className="w-64 flex-shrink-0 hidden lg:flex lg:items-center">
+                    <nav className="bg-brand-slate/50 rounded-xl p-4 border border-brand-cream/10 sticky top-24 w-full">
                         <div className="flex items-center gap-3 mb-6 pb-4 border-b border-brand-cream/10">
                             <div className="w-10 h-10 rounded-full bg-gradient-to-br from-brand-mint to-brand-teal flex items-center justify-center">
                                 <User className="w-5 h-5 text-brand-dark" />

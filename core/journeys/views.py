@@ -369,3 +369,133 @@ class ReportDownloadView(views.APIView):
             "file_url": request.build_absolute_uri(report.file.url) if report.file else None,
             "data": report.data
         })
+
+
+# ============ Doctor Action APIs ============
+
+from .serializers import OrderTestSerializer, WritePrescriptionSerializer
+from .models import Prescription
+
+class OrderTestView(views.APIView):
+    """
+    Doctor orders a test for a patient within an existing journey.
+    Creates a TEST type step in the journey.
+    """
+    permission_classes = [IsAuthenticated]
+    
+    def post(self, request):
+        if not request.user.is_doctor:
+            return Response({"error": "Only doctors can order tests"}, status=status.HTTP_403_FORBIDDEN)
+        
+        serializer = OrderTestSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+        journey_id = serializer.validated_data['journey_id']
+        test_name = serializer.validated_data['test_name']
+        notes = serializer.validated_data.get('notes', '')
+        
+        doctor = request.user.doctor_profile
+        org = doctor.organization
+        
+        # Get journey and check access
+        try:
+            journey = Journey.objects.get(id=journey_id)
+        except Journey.DoesNotExist:
+            return Response({"error": "Journey not found"}, status=status.HTTP_404_NOT_FOUND)
+        
+        # Check consent
+        has_consent = HealthDataConsent.objects.filter(
+            patient=journey.patient,
+            requesting_org=org,
+            status='GRANTED'
+        ).exists()
+        
+        journey_from_own_org = journey.created_by_org == org
+        
+        if not (journey_from_own_org or has_consent):
+            return Response({"error": "Consent required to modify this journey"}, status=status.HTTP_403_FORBIDDEN)
+        
+        # Create TEST step
+        step_order = journey.steps.count() + 1
+        step = JourneyStep.objects.create(
+            journey=journey,
+            type="TEST",
+            order=step_order,
+            notes=f"{test_name}: {notes}" if notes else test_name,
+            created_by_org=org,
+            created_by_doctor=doctor
+        )
+        
+        return Response({
+            "message": f"Test '{test_name}' ordered successfully",
+            "step_id": step.id,
+            "journey_id": journey.id
+        }, status=status.HTTP_201_CREATED)
+
+
+class WritePrescriptionView(views.APIView):
+    """
+    Doctor writes a prescription within an existing journey.
+    Creates a PHARMACY type step with prescription details.
+    """
+    permission_classes = [IsAuthenticated]
+    
+    def post(self, request):
+        if not request.user.is_doctor:
+            return Response({"error": "Only doctors can write prescriptions"}, status=status.HTTP_403_FORBIDDEN)
+        
+        serializer = WritePrescriptionSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+        journey_id = serializer.validated_data['journey_id']
+        medications = serializer.validated_data['medications']
+        notes = serializer.validated_data.get('notes', '')
+        
+        doctor = request.user.doctor_profile
+        org = doctor.organization
+        
+        # Get journey and check access
+        try:
+            journey = Journey.objects.get(id=journey_id)
+        except Journey.DoesNotExist:
+            return Response({"error": "Journey not found"}, status=status.HTTP_404_NOT_FOUND)
+        
+        # Check consent
+        has_consent = HealthDataConsent.objects.filter(
+            patient=journey.patient,
+            requesting_org=org,
+            status='GRANTED'
+        ).exists()
+        
+        journey_from_own_org = journey.created_by_org == org
+        
+        if not (journey_from_own_org or has_consent):
+            return Response({"error": "Consent required to modify this journey"}, status=status.HTTP_403_FORBIDDEN)
+        
+        # Create PHARMACY step
+        step_order = journey.steps.count() + 1
+        step = JourneyStep.objects.create(
+            journey=journey,
+            type="PHARMACY",
+            order=step_order,
+            notes=notes or "Prescription",
+            created_by_org=org,
+            created_by_doctor=doctor
+        )
+        
+        # Create Prescription record
+        prescription = Prescription.objects.create(
+            step=step,
+            doctor=doctor,
+            medications=medications
+        )
+        
+        return Response({
+            "message": "Prescription created successfully",
+            "step_id": step.id,
+            "prescription_id": prescription.id,
+            "journey_id": journey.id
+        }, status=status.HTTP_201_CREATED)
+

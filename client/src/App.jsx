@@ -26,43 +26,45 @@ function App() {
       <Router>
         <div className="min-h-screen bg-brand-dark text-brand-cream font-sans selection:bg-brand-mint/30">
           <Navbar />
-          <Routes>
-            {/* Public Routes */}
-            <Route path="/" element={<LandingPageB2C />} />
-            <Route path="/business" element={<LandingPageB2B />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/signup" element={<Signup />} />
+          <main className="pt-10">
+            <Routes>
+              {/* Public Routes */}
+              <Route path="/" element={<LandingPageB2C />} />
+              <Route path="/business" element={<LandingPageB2B />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/signup" element={<Signup />} />
 
-            {/* Patient Routes */}
-            <Route
-              path="/patient/*"
-              element={
-                <PrivateRoute allowedRoles={['patient']}>
-                  <PatientDashboard />
-                </PrivateRoute>
-              }
-            />
+              {/* Patient Routes */}
+              <Route
+                path="/patient/*"
+                element={
+                  <PrivateRoute allowedRoles={['patient']}>
+                    <PatientDashboard />
+                  </PrivateRoute>
+                }
+              />
 
-            {/* Doctor Routes */}
-            <Route
-              path="/doctor/*"
-              element={
-                <PrivateRoute allowedRoles={['doctor']}>
-                  <DoctorDashboard />
-                </PrivateRoute>
-              }
-            />
+              {/* Doctor Routes */}
+              <Route
+                path="/doctor/*"
+                element={
+                  <PrivateRoute allowedRoles={['doctor']}>
+                    <DoctorDashboard />
+                  </PrivateRoute>
+                }
+              />
 
-            {/* Provider Routes */}
-            <Route
-              path="/provider/*"
-              element={
-                <PrivateRoute allowedRoles={['provider']}>
-                  <ProviderDashboard />
-                </PrivateRoute>
-              }
-            />
-          </Routes>
+              {/* Provider Routes */}
+              <Route
+                path="/provider/*"
+                element={
+                  <PrivateRoute allowedRoles={['provider']}>
+                    <ProviderDashboard />
+                  </PrivateRoute>
+                }
+              />
+            </Routes>
+          </main>
         </div>
       </Router>
     </AuthProvider>

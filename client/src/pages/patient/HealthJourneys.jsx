@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { journeyAPI, reportAPI } from '../../api/client';
 import {
     RefreshCw, FileText, ChevronDown, ChevronRight, Download,
-    Stethoscope, FlaskConical, Calendar, CheckCircle, Clock, AlertCircle
+    Stethoscope, FlaskConical, Calendar, CheckCircle, Clock, AlertCircle, CalendarPlus
 } from 'lucide-react';
 
 const STEP_TYPE_ICONS = {
@@ -18,6 +19,7 @@ const STEP_STATUS_STYLES = {
 };
 
 export default function HealthJourneys() {
+    const navigate = useNavigate();
     const [journeys, setJourneys] = useState([]);
     const [loading, setLoading] = useState(true);
     const [expandedJourney, setExpandedJourney] = useState(null);
@@ -111,6 +113,18 @@ export default function HealthJourneys() {
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-3">
+                                        {journey.status === 'ACTIVE' && (
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    navigate(`/patient/book-appointment?journey_id=${journey.id}`);
+                                                }}
+                                                className="px-3 py-1.5 bg-brand-mint/20 text-brand-mint rounded-lg text-xs font-medium hover:bg-brand-mint/30 transition-colors flex items-center gap-1"
+                                            >
+                                                <CalendarPlus className="w-4 h-4" />
+                                                Book Follow-up
+                                            </button>
+                                        )}
                                         <span className={`px-3 py-1 rounded-full text-xs font-medium ${journey.status === 'ACTIVE'
                                             ? 'bg-green-500/20 text-green-300'
                                             : journey.status === 'COMPLETED'

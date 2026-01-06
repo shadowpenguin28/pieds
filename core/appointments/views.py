@@ -36,11 +36,72 @@ class AppointmentListCreateView(generics.ListCreateAPIView):
         return Appointment.objects.none()
     
     def perform_create(self, serializer):
-        """Auto-set patient from the authenticated user"""
+        """
+        Auto-create journey and consultation step when booking appointment.
+        - If journey_id provided: Add step to existing journey (follow-up)
+        - If no journey_id: Create new journey + first step
+        - If grant_consent: Auto-grant consent to doctor's org
+        """
+        from rest_framework.exceptions import PermissionDenied, ValidationError
+        from journeys.models import Journey, JourneyStep, HealthDataConsent
+        from django.utils import timezone as tz
+        
         if not self.request.user.is_patient:
-            from rest_framework.exceptions import PermissionDenied
             raise PermissionDenied("Only patients can create appointments")
-        serializer.save(patient=self.request.user.patient_profile)
+        
+        patient = self.request.user.patient_profile
+        doctor = serializer.validated_data['doctor']
+        journey_id = serializer.validated_data.pop('journey_id', None)
+        reason = serializer.validated_data.pop('reason', None)
+        grant_consent = serializer.validated_data.pop('grant_consent', False)
+        
+        # Get or create journey
+        if journey_id:
+            # Follow-up: Add to existing journey
+            try:
+                journey = Journey.objects.get(id=journey_id, patient=patient)
+            except Journey.DoesNotExist:
+                raise ValidationError({"journey_id": "Journey not found or does not belong to you"})
+        else:
+            # New: Create journey
+            journey = Journey.objects.create(
+                patient=patient,
+                title=reason or f"Consultation - {serializer.validated_data['scheduled_time'].strftime('%b %d, %Y')}",
+                created_by_org=doctor.organization
+            )
+        
+        # Handle auto-consent if requested
+        if grant_consent and doctor.organization:
+            consent, created = HealthDataConsent.objects.get_or_create(
+                patient=patient,
+                requesting_org=doctor.organization,
+                defaults={
+                    'requesting_doctor': doctor,
+                    'status': 'GRANTED',
+                    'purpose': f"Auto-granted for journey: {journey.title}",
+                    'responded_at': tz.now()
+                }
+            )
+            # If consent already exists but was denied/revoked, update it
+            if not created and consent.status in ['DENIED', 'REVOKED']:
+                consent.status = 'GRANTED'
+                consent.purpose = f"Auto-granted for journey: {journey.title}"
+                consent.responded_at = tz.now()
+                consent.save()
+        
+        # Create consultation step
+        step_order = journey.steps.count() + 1
+        step = JourneyStep.objects.create(
+            journey=journey,
+            type="CONSULTATION",
+            order=step_order,
+            notes=f"Appointment with Dr. {doctor.user.first_name} {doctor.user.last_name}",
+            created_by_org=doctor.organization,
+            created_by_doctor=doctor
+        )
+        
+        # Save appointment with step linked
+        serializer.save(patient=patient, journey_step=step)
 
 
 class AppointmentDetailView(generics.RetrieveUpdateAPIView):
@@ -256,8 +317,8 @@ class WaitTimeView(views.APIView):
             scheduled_time__gte=start_of_day,
             scheduled_time__lte=end_of_day,
             scheduled_time__lt=appointment.scheduled_time,
-            status__in=['SCHEDULED', 'IN_PROGRESS']
-        ).exclude(id=appointment.id).count()
+            status__in=['SCHEDULED', 'IN_PROGRESS', 'CHECKED_IN']
+        ).exclude(id=appointment.id).coint()
         
         # Calculate predicted start time based on queue
         # Check if there's an appointment in progress

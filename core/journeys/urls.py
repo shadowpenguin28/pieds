@@ -2,7 +2,8 @@ from django.urls import path
 from .views import (
     JourneyListCreateView, JourneyDetailView, JourneyStepCreateView,
     RequestAccessByAbhaView, PatientConsentListView, ConsentRespondView,
-    FetchJourneysByAbhaView, ReportUploadView, ReportDownloadView
+    FetchJourneysByAbhaView, ReportUploadView, ReportDownloadView,
+    OrderTestView, WritePrescriptionView
 )
 
 urlpatterns = [
@@ -20,4 +21,9 @@ urlpatterns = [
     # Lab Reports
     path('steps/<int:step_id>/report/', ReportUploadView.as_view(), name='report_upload'),
     path('steps/<int:step_id>/report/download/', ReportDownloadView.as_view(), name='report_download'),
+    
+    # Doctor Actions
+    path('order-test/', OrderTestView.as_view(), name='order_test'),
+    path('prescribe/', WritePrescriptionView.as_view(), name='write_prescription'),
 ]
+

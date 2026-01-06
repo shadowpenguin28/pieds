@@ -46,21 +46,39 @@ class AppointmentSerializer(serializers.ModelSerializer):
 
 
 class AppointmentCreateSerializer(serializers.ModelSerializer):
-    """Serializer for creating appointments"""
+    """Serializer for creating appointments with auto-journey creation"""
     estimated_duration = serializers.DurationField(required=False)
+    journey_id = serializers.IntegerField(required=False, write_only=True, allow_null=True)
+    reason = serializers.CharField(required=False, write_only=True, max_length=255, allow_blank=True)
+    grant_consent = serializers.BooleanField(
+        required=False, 
+        default=False, 
+        write_only=True,
+        help_text="If true, auto-grants consent to the doctor's organization for this journey"
+    )
     
     class Meta:
         model = Appointment
-        fields = ['patient', 'doctor', 'scheduled_time', 'estimated_duration', 'journey_step']
+        fields = ['patient', 'doctor', 'scheduled_time', 'estimated_duration', 'journey_step', 'journey_id', 'reason', 'grant_consent']
         extra_kwargs = {
             'patient': {'required': False, 'read_only': True},
-            'journey_step': {'required': False, 'allow_null': True}
+            'journey_step': {'required': False, 'allow_null': True, 'read_only': True}
         }
     
     def validate_scheduled_time(self, value):
         if value < timezone.now():
             raise serializers.ValidationError("Cannot schedule appointment in the past")
         return value
+    
+    def validate(self, data):
+        journey_id = data.get('journey_id')
+        reason = data.get('reason')
+        
+        # If no journey_id, reason is required for new journey title
+        if not journey_id and not reason:
+            data['reason'] = f"Consultation - {data['scheduled_time'].strftime('%b %d, %Y')}"
+        
+        return data
 
 
 class QueueStatusSerializer(serializers.Serializer):
