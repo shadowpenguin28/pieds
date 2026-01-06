@@ -153,7 +153,7 @@ export default function UploadReport() {
                             type="text"
                             value={searchInput}
                             onChange={(e) => setSearchInput(e.target.value)}
-                            placeholder="Enter ABHA ID (e.g., yourname@uhi)"
+                            placeholder="Enter ABHA ID (e.g., yourname@crescere)"
                             className="w-full px-4 py-3 bg-brand-dark/50 border border-brand-cream/20 rounded-xl text-brand-cream placeholder-brand-cream/40 focus:outline-none focus:border-brand-mint"
                         />
 

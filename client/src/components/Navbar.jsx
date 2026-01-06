@@ -28,7 +28,7 @@ const Navbar = () => {
         <nav className="fixed top-0 left-0 right-0 z-50 backdrop-blur-md bg-brand-dark/50 border-b border-brand-cream/10">
             <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
                 <Link to="/" className="text-xl font-bold bg-gradient-to-r from-brand-mint to-brand-cream bg-clip-text text-transparent">
-                    UHI App
+                    Crescere
                 </Link>
 
                 <div className="flex items-center gap-6 text-sm font-medium">

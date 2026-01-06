@@ -1,11 +1,12 @@
-# UHI Platform - Unified Health Interface
+# Crescere - Unified Health Interface Platform
 
 A comprehensive healthcare platform implementing the Unified Health Interface (UHI) protocol for seamless patient-doctor-provider interactions.
 
 ## 🎯 Features
 
 ### Patient Portal
-- Digital QR Code for instant identification
+- Digital QR Code with full profile data for instant identification
+- Auto-regenerating QR code when profile is updated
 - Book & manage appointments with doctors
 - Integrated wallet system for payments
 - Health journey tracking with lab reports
@@ -27,23 +28,10 @@ A comprehensive healthcare platform implementing the Unified Health Interface (U
 - Revenue tracking
 - Organization doctor management
 
----
-
-## 🛠️ Tech Stack
-
-**Backend:**
-- Django 5.1.4
-- Django REST Framework 3.15.2
-- JWT Authentication (simplejwt)
-- Python 3.11+
-
-**Frontend:**
-- React 19.0.0
-- Vite 6.0.5
-- TailwindCSS 4.0.0
-- React Router v7
-- Axios for API calls
-- html5-qrcode for QR scanning
+### Landing Pages
+- **B2C Landing** (`/`) - For patients
+- **HSP Landing** (`/hsp`) - For healthcare service providers
+- **Developer Landing** (`/developers`) - For API developers
 
 ---
 
@@ -70,15 +58,16 @@ cd pieds
 
 #### 2.1 Create Python Virtual Environment
 
-macos
+**macOS/Linux:**
 ```bash
 python3 -m venv venv
 source venv/bin/activate
 ```
-windows
-```
+
+**Windows:**
+```bash
 python -m venv venv
-source venv\Scripts\activate
+venv\Scripts\activate
 ```
 
 #### 2.2 Install Dependencies
@@ -118,18 +107,7 @@ npm install
 
 You need to run **3 separate servers** in different terminal windows:
 
-Before starting the dev servers, ensure python virtual environment is activated via: 
-
-macos
-```bash
-python3 -m venv venv
-source venv/bin/activate
-```
-windows
-```
-python -m venv venv
-source venv\Scripts\activate
-```
+Before starting the dev servers, ensure python virtual environment is activated.
 
 ### Terminal 1: Main Backend Server
 
@@ -156,7 +134,7 @@ cd client
 npm run dev
 ```
 
-Frontend Application runs on: **http://localhost:5174**
+Frontend Application runs on: **http://localhost:5173**
 
 ---
 
@@ -165,7 +143,7 @@ Frontend Application runs on: **http://localhost:5174**
 ```
 pieds/
 ├── core/                      # Main Django backend
-│   ├── users/                 # User auth & profiles
+│   ├── users/                 # User auth, profiles, QR APIs
 │   ├── appointments/          # Appointment management
 │   ├── journeys/             # Health journeys & consents
 │   ├── payments/             # Wallet & transactions
@@ -177,7 +155,11 @@ pieds/
 │   │   │   ├── patient/     # Patient portal pages
 │   │   │   ├── doctor/      # Doctor portal pages
 │   │   │   ├── provider/    # Provider portal pages
-│   │   │   └── shared/      # Shared components
+│   │   │   ├── shared/      # Shared components (Profile)
+│   │   │   └── landing/     # Landing page components
+│   │   ├── components/
+│   │   │   ├── Navbar.jsx
+│   │   │   └── landing/     # Landing page sections
 │   │   ├── api/             # API client
 │   │   ├── contexts/        # React contexts
 │   │   └── App.jsx
@@ -187,4 +169,9 @@ pieds/
 │   └── architecture_diagrams.md
 └── README.md
 ```
+
 ---
+
+## 📄 License
+
+© 2026 Crescere. All rights reserved.

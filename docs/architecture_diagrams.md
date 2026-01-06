@@ -1,4 +1,4 @@
-# UHI Platform - Architecture Diagrams
+# Crescere Platform - Architecture Diagrams
 
 ## 1. User Registration APIs
 

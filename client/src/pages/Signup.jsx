@@ -116,7 +116,7 @@ export default function Signup() {
                         <UserPlus className="w-8 h-8 text-brand-dark" />
                     </div>
                     <h1 className="text-3xl font-bold text-brand-cream">Create Account</h1>
-                    <p className="text-brand-cream/60 mt-2">Join the UHI platform</p>
+                    <p className="text-brand-cream/60 mt-2">Join the Crescere platform</p>
                 </div>
 
                 {/* Role Selection */}
@@ -127,8 +127,8 @@ export default function Signup() {
                             type="button"
                             onClick={() => setRole(option.id)}
                             className={`p-4 rounded-xl border-2 transition-all text-center ${role === option.id
-                                    ? 'border-brand-mint bg-brand-mint/10'
-                                    : 'border-brand-cream/20 hover:border-brand-cream/40'
+                                ? 'border-brand-mint bg-brand-mint/10'
+                                : 'border-brand-cream/20 hover:border-brand-cream/40'
                                 }`}
                         >
                             <option.icon className={`w-6 h-6 mx-auto mb-2 ${role === option.id ? 'text-brand-mint' : 'text-brand-cream/60'}`} />

@@ -1,4 +1,4 @@
-# UHI Platform API Documentation
+# Crescere Platform API Documentation
 
 **Base URL:** `http://localhost:8000/api`
 
@@ -141,17 +141,31 @@ GET /api/auth/patients/me/qr-data/
 ```
 🔐 **Auth Required:** Patient only
 
-**Response:**
+**Response (v2.0 with full profile data):**
 ```json
 {
   "qr_data": {
-    "v": "1.0",
-    "a": "Om_Bhalla.2367@uhi",
-    "p": 1,
-    "s": "5be9c09af068f1ca"
+    "version": "2.0",
+    "abha_id": "Om_Bhalla.2367@crescere",
+    "patient_id": 1,
+    "signature": "5be9c09af068f1ca",
+    "first_name": "Om",
+    "last_name": "Bhalla",
+    "email": "patient@example.com",
+    "phone_number": "9876543210",
+    "date_of_birth": "1990-01-15",
+    "gender": "Male",
+    "blood_group": "O+",
+    "address": "123 Main St",
+    "emergency_contact_name": "Wife Name",
+    "emergency_contact_phone": "9876543211",
+    "allergies": "Penicillin",
+    "current_medications": "None"
   }
 }
 ```
+
+> **Note:** QR code is automatically regenerated when patient profile is updated.
 
 ---
 
@@ -161,10 +175,18 @@ POST /api/auth/patients/qr-scan/
 ```
 🔐 **Auth Required:** Doctor/Provider only
 
-**Request Body:**
+**Request Body (v2.0 format):**
 ```json
 {
-  "qr_data": {"v":"1.0","a":"Om_Bhalla.2367@uhi","p":1,"s":"5be9c09af068f1ca"}
+  "qr_data": {
+    "version": "2.0",
+    "abha_id": "Om_Bhalla.2367@crescere",
+    "patient_id": 1,
+    "signature": "5be9c09af068f1ca",
+    "first_name": "Om",
+    "last_name": "Bhalla",
+    ...
+  }
 }
 ```
 
@@ -172,7 +194,7 @@ POST /api/auth/patients/qr-scan/
 ```json
 {
   "patient_id": 1,
-  "abha_id": "Om_Bhalla.2367@uhi",
+  "abha_id": "Om_Bhalla.2367@crescere",
   "name": "Om Bhalla",
   "email": "patient@example.com",
   "phone_number": "9876543210",
@@ -602,7 +624,7 @@ Returns current user profile with type-specific fields.
   "phone_number": "9876543210",
   "type": "PATIENT",
   "profile": {
-    "abha_id": "Om_Bhalla.2367@uhi",
+    "abha_id": "Om_Bhalla.2367@crescere",
     "dob": "1990-01-15",
     "gender": "Male",
     "blood_group": "O+",

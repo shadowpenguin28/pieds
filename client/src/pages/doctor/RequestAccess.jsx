@@ -97,7 +97,7 @@ export default function RequestAccess() {
                             type="text"
                             value={abhaId}
                             onChange={(e) => setAbhaId(e.target.value)}
-                            placeholder="Enter ABHA ID (e.g., John_Doe.1234@uhi)"
+                            placeholder="Enter ABHA ID (e.g., John_Doe.1234@crescere)"
                             className="w-full px-4 py-3 bg-brand-dark/50 border border-brand-cream/20 rounded-xl text-brand-cream placeholder-brand-cream/40 focus:outline-none focus:border-brand-mint"
                         />
                     </div>
@@ -227,8 +227,8 @@ export default function RequestAccess() {
                                                 </p>
                                             </div>
                                             <span className={`px-2 py-0.5 rounded-full text-xs ${journey.status === 'ACTIVE'
-                                                    ? 'bg-green-500/20 text-green-300'
-                                                    : 'bg-gray-500/20 text-gray-300'
+                                                ? 'bg-green-500/20 text-green-300'
+                                                : 'bg-gray-500/20 text-gray-300'
                                                 }`}>
                                                 {journey.status}
                                             </span>
