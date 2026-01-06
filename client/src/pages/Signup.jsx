@@ -116,7 +116,7 @@ export default function Signup() {
                         <UserPlus className="w-8 h-8 text-brand-dark" />
                     </div>
                     <h1 className="text-3xl font-bold text-brand-cream">Create Account</h1>
-                    <p className="text-brand-cream/60 mt-2">Join the Crescere platform</p>
+                    <p className="text-brand-cream/60 mt-2">Join the Crescare platform</p>
                 </div>
 
                 {/* Role Selection */}

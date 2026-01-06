@@ -7,7 +7,7 @@ const features = [
     {
         icon: Search,
         title: "Marketplace",
-        description: "Book appointments and discover healthcare services through Crescere integration.",
+        description: "Book appointments and discover healthcare services through Crescare integration.",
     },
     {
         icon: Video,

@@ -1,4 +1,4 @@
-# Crescere Platform - Architecture Diagrams
+# Crescare Platform - Architecture Diagrams
 
 ## 1. User Registration APIs
 

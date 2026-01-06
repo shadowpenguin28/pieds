@@ -1,4 +1,4 @@
-# Crescere - Unified Health Interface Platform
+# Crescare - Unified Health Interface Platform
 
 A comprehensive healthcare platform implementing the Unified Health Interface (UHI) protocol for seamless patient-doctor-provider interactions.
 
@@ -174,4 +174,4 @@ pieds/
 
 ## 📄 License
 
-© 2026 Crescere. All rights reserved.
+© 2026 Crescare. All rights reserved.

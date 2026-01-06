@@ -9,7 +9,7 @@ const Footer = () => {
                     {/* Brand */}
                     <div className="md:col-span-2">
                         <Link to="/" className="text-2xl font-bold text-gradient">
-                            Crescere
+                            Crescare
                         </Link>
                         <p className="text-[hsl(220_20%_60%)] mt-4 max-w-md">
                             Connecting India's healthcare ecosystem. Unified health records,
@@ -44,7 +44,7 @@ const Footer = () => {
                             <li><a href="#" className="hover:text-[hsl(174_72%_56%)] transition-colors">About</a></li>
                             <li><a href="#" className="hover:text-[hsl(174_72%_56%)] transition-colors">Privacy Policy</a></li>
                             <li><a href="#" className="hover:text-[hsl(174_72%_56%)] transition-colors">Terms of Service</a></li>
-                            <li><a href="mailto:hello@crescere.health" className="hover:text-[hsl(174_72%_56%)] transition-colors flex items-center gap-2">
+                            <li><a href="mailto:hello@crescare.health" className="hover:text-[hsl(174_72%_56%)] transition-colors flex items-center gap-2">
                                 <Mail className="w-4 h-4" /> Contact
                             </a></li>
                         </ul>
@@ -53,7 +53,7 @@ const Footer = () => {
 
                 <div className="mt-16 pt-8 border-t border-[hsl(222_30%_20%)] flex flex-col md:flex-row items-center justify-between gap-4">
                     <p className="text-[hsl(220_20%_60%/0.6)] text-sm">
-                        © 2026 Crescere. All rights reserved.
+                        © 2026 Crescare. All rights reserved.
                     </p>
                     <p className="text-[hsl(220_20%_60%/0.6)] text-sm">
                         Built with ❤️ for India's healthcare

@@ -97,7 +97,7 @@ export default function RequestAccess() {
                             type="text"
                             value={abhaId}
                             onChange={(e) => setAbhaId(e.target.value)}
-                            placeholder="Enter ABHA ID (e.g., John_Doe.1234@crescere)"
+                            placeholder="Enter ABHA ID (e.g., John_Doe.1234@crescare)"
                             className="w-full px-4 py-3 bg-brand-dark/50 border border-brand-cream/20 rounded-xl text-brand-cream placeholder-brand-cream/40 focus:outline-none focus:border-brand-mint"
                         />
                     </div>

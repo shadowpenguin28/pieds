@@ -9,7 +9,7 @@ const doctorBenefits = [
     { icon: Gift, title: "Free Trial", description: "3-6 months free software trial" },
     { icon: Video, title: "Free Telemedicine", description: "For follow-ups and online consultations" },
     { icon: Activity, title: "Patient Wait Status", description: "Less angry patients, save doctor's time" },
-    { icon: Eye, title: "Increased Visibility", description: "Discover new patients via Crescere network" },
+    { icon: Eye, title: "Increased Visibility", description: "Discover new patients via Crescare network" },
 ];
 
 const labBenefits = [
@@ -42,7 +42,7 @@ const LandingPageHSP = () => {
                         </h1>
 
                         <p className="text-lg md:text-xl text-[hsl(220_20%_60%)] max-w-2xl mx-auto mb-10">
-                            Join India's fastest growing healthcare network. Get Crescere integration,
+                            Join India's fastest growing healthcare network. Get Crescare integration,
                             increase visibility, and manage your practice effortlessly.
                         </p>
 
@@ -55,7 +55,7 @@ const LandingPageHSP = () => {
                                 <ArrowRight className="w-5 h-5" />
                             </Link>
                             <a
-                                href="mailto:sales@crescere.health"
+                                href="mailto:sales@crescare.health"
                                 className="px-8 py-4 glass glass-border text-[hsl(180_100%_98%)] font-medium rounded-full hover:bg-[hsl(180_100%_98%/0.1)] transition-all"
                             >
                                 Contact Sales
@@ -188,7 +188,7 @@ const LandingPageHSP = () => {
                             Ready to <span className="text-gradient">Grow Your Practice</span>?
                         </h2>
                         <p className="text-[hsl(220_20%_60%)] text-lg mb-10">
-                            Join the Crescere network today and start connecting with patients across India.
+                            Join the Crescare network today and start connecting with patients across India.
                         </p>
                         <Link
                             to="/signup"

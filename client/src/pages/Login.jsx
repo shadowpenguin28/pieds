@@ -49,7 +49,7 @@ export default function Login() {
                         <LogIn className="w-8 h-8 text-brand-dark" />
                     </div>
                     <h1 className="text-3xl font-bold text-brand-cream">Welcome Back</h1>
-                    <p className="text-brand-cream/60 mt-2">Sign in to your Crescere account</p>
+                    <p className="text-brand-cream/60 mt-2">Sign in to your Crescare account</p>
                 </div>
 
                 {/* Form */}

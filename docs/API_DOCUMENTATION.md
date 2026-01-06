@@ -1,4 +1,4 @@
-# Crescere Platform API Documentation
+# Crescare Platform API Documentation
 
 **Base URL:** `http://localhost:8000/api`
 
@@ -146,7 +146,7 @@ GET /api/auth/patients/me/qr-data/
 {
   "qr_data": {
     "version": "2.0",
-    "abha_id": "Om_Bhalla.2367@crescere",
+    "abha_id": "Om_Bhalla.2367@crescare",
     "patient_id": 1,
     "signature": "5be9c09af068f1ca",
     "first_name": "Om",
@@ -180,7 +180,7 @@ POST /api/auth/patients/qr-scan/
 {
   "qr_data": {
     "version": "2.0",
-    "abha_id": "Om_Bhalla.2367@crescere",
+    "abha_id": "Om_Bhalla.2367@crescare",
     "patient_id": 1,
     "signature": "5be9c09af068f1ca",
     "first_name": "Om",
@@ -194,7 +194,7 @@ POST /api/auth/patients/qr-scan/
 ```json
 {
   "patient_id": 1,
-  "abha_id": "Om_Bhalla.2367@crescere",
+  "abha_id": "Om_Bhalla.2367@crescare",
   "name": "Om Bhalla",
   "email": "patient@example.com",
   "phone_number": "9876543210",
@@ -624,7 +624,7 @@ Returns current user profile with type-specific fields.
   "phone_number": "9876543210",
   "type": "PATIENT",
   "profile": {
-    "abha_id": "Om_Bhalla.2367@crescere",
+    "abha_id": "Om_Bhalla.2367@crescare",
     "dob": "1990-01-15",
     "gender": "Male",
     "blood_group": "O+",

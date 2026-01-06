@@ -9,7 +9,7 @@ const apiFeatures = [
 ];
 
 const codeExample = `// Book an appointment
-const response = await fetch('https://api.crescere.health/v1/appointments', {
+const response = await fetch('https://api.crescare.health/v1/appointments', {
   method: 'POST',
   headers: {
     'Authorization': 'Bearer YOUR_API_KEY',
@@ -40,7 +40,7 @@ const LandingPageDev = () => {
                         </span>
 
                         <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold leading-tight mb-6">
-                            Build on <span className="text-gradient">Crescere</span>
+                            Build on <span className="text-gradient">Crescare</span>
                         </h1>
 
                         <p className="text-lg md:text-xl text-[hsl(220_20%_60%)] max-w-2xl mx-auto mb-10">
@@ -153,7 +153,7 @@ const LandingPageDev = () => {
                             Ready to <span className="text-gradient">Start Building</span>?
                         </h2>
                         <p className="text-[hsl(220_20%_60%)] text-lg mb-10">
-                            Create your developer account and get instant access to the Crescere API sandbox.
+                            Create your developer account and get instant access to the Crescare API sandbox.
                         </p>
                         <Link
                             to="/signup"
