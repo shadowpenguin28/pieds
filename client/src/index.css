@@ -1,43 +1,183 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap');
 @import "tailwindcss";
 
 @theme {
-  --font-family-sans: 'Inter', system-ui, Avenir, Helvetica, Arial, sans-serif;
+  --font-family-sans: 'Space Grotesk', system-ui, sans-serif;
+  --font-family-display: 'Outfit', sans-serif;
 
-  /* Primary Palette */
-  --color-brand-dark: #071E22;
-  /* Ink Black - Background */
-  --color-brand-mint: #3AB795;
-  /* Mint Leaf - Primary accent */
-  --color-brand-cream: #EAE0D5;
-  /* Almond Cream - Text/Light */
-  --color-brand-red: #DD403A;
-  /* Cinnabar - Error/Alert */
+  /* Exact launchpad-builder color scheme */
+  --color-background: hsl(222 47% 6%);
+  --color-foreground: hsl(180 100% 98%);
+  --color-card: hsl(222 40% 10%);
+  --color-primary: hsl(174 72% 56%);
+  --color-primary-foreground: hsl(222 47% 6%);
+  --color-secondary: hsl(222 30% 15%);
+  --color-muted: hsl(222 30% 18%);
+  --color-muted-foreground: hsl(220 20% 60%);
+  --color-accent: hsl(174 72% 40%);
+  --color-border: hsl(222 30% 20%);
 
-  /* Derived Colors */
-  --color-brand-slate: #0D2F35;
-  /* Lighter dark for cards */
-  --color-brand-teal: #2D9B7A;
-  /* Darker mint */
+  /* Legacy support - map to new scheme */
+  --color-brand-dark: hsl(222 47% 6%);
+  --color-brand-mint: hsl(174 72% 56%);
+  --color-brand-cream: hsl(180 100% 98%);
+  --color-brand-red: hsl(0 84% 60%);
+  --color-brand-slate: hsl(222 40% 10%);
+  --color-brand-teal: hsl(174 72% 40%);
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 body {
-  @apply bg-brand-dark text-brand-cream antialiased;
+  background: hsl(222 47% 6%);
+  color: hsl(180 100% 98%);
+  font-family: var(--font-family-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-family-display);
 }
 
 @layer utilities {
   .glass-card {
-    @apply bg-brand-slate/50 backdrop-blur-lg border border-brand-cream/10 rounded-2xl;
+    background: hsl(222 40% 10% / 0.5);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid hsl(180 100% 98% / 0.1);
+    border-radius: 1rem;
+  }
+
+  .glass {
+    background: hsl(222 40% 10% / 0.6);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+  }
+
+  .glass-border {
+    border: 1px solid hsl(174 72% 56% / 0.1);
   }
 
   .text-gradient {
-    @apply bg-clip-text text-transparent bg-gradient-to-r from-brand-mint to-brand-teal;
+    background: linear-gradient(135deg, hsl(174 72% 56%) 0%, hsl(186 100% 60%) 50%, hsl(174 72% 56%) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .bg-hero-gradient {
+    background: linear-gradient(135deg, hsl(222 47% 6%) 0%, hsl(222 50% 10%) 50%, hsl(200 50% 8%) 100%);
+  }
+
+  .bg-card-gradient {
+    background: linear-gradient(145deg, hsl(222 40% 12%) 0%, hsl(222 40% 8%) 100%);
+  }
+
+  .glow-primary {
+    box-shadow: 0 0 60px hsl(174 72% 56% / 0.3);
+  }
+
+  .shadow-hover {
+    box-shadow: 0 16px 48px hsl(174 72% 56% / 0.2);
+  }
+
+  .shadow-card {
+    box-shadow: 0 8px 32px hsl(222 47% 4% / 0.4);
   }
 
   .btn-primary {
-    @apply bg-gradient-to-r from-brand-mint to-brand-teal text-brand-dark font-semibold rounded-xl hover:opacity-90 transition-opacity;
+    background: linear-gradient(135deg, hsl(174 72% 56%) 0%, hsl(186 100% 42%) 100%);
+    color: hsl(222 47% 6%);
+    font-weight: 600;
+    border-radius: 0.75rem;
+    transition: opacity 0.2s;
+  }
+
+  .btn-primary:hover {
+    opacity: 0.9;
   }
 
   .btn-danger {
-    @apply bg-brand-red/20 text-brand-red border border-brand-red/30 rounded-xl hover:bg-brand-red/30 transition-colors;
+    background: hsl(0 84% 60% / 0.2);
+    color: hsl(0 84% 60%);
+    border: 1px solid hsl(0 84% 60% / 0.3);
+    border-radius: 0.75rem;
+    transition: background 0.2s;
+  }
+
+  .btn-danger:hover {
+    background: hsl(0 84% 60% / 0.3);
+  }
+}
+
+@layer components {
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
+  }
+
+  .animate-pulse-glow {
+    animation: pulse-glow 3s ease-in-out infinite;
+  }
+
+  .animate-fade-up {
+    animation: fade-up 0.8s ease-out forwards;
+  }
+
+  .animate-fade-in {
+    animation: fade-in 1s ease-out forwards;
+  }
+}
+
+@keyframes float {
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-20px);
+  }
+}
+
+@keyframes pulse-glow {
+
+  0%,
+  100% {
+    box-shadow: 0 0 20px hsl(174 72% 56% / 0.3);
+  }
+
+  50% {
+    box-shadow: 0 0 40px hsl(174 72% 56% / 0.5);
+  }
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
   }
 }

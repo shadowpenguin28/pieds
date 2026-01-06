@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Routes, Route, Link, useLocation } from 'react-router-dom';
+import { Routes, Route, Link, useLocation, Navigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { walletAPI, appointmentAPI, qrAPI } from '../../api/client';
 import { QRCodeSVG } from 'qrcode.react';
@@ -253,6 +253,7 @@ export default function PatientDashboard() {
                         <Route path="qr" element={<PatientQR />} />
                         <Route path="appointments" element={<PatientAppointments />} />
                         <Route path="appointments/book" element={<BookAppointment />} />
+                        <Route path="book-appointment" element={<Navigate to="/patient/appointments/book" replace />} />
                         <Route path="wait-time/:appointmentId" element={<WaitTime />} />
                         <Route path="journeys" element={<HealthJourneys />} />
                         <Route path="consents" element={<Consents />} />

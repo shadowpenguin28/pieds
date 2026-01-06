@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { profileAPI, organizationAPI } from '../../api/client';
+import { profileAPI, organizationAPI, qrAPI } from '../../api/client';
 import { useAuth } from '../../contexts/AuthContext';
 import {
     User, Save, RefreshCw, CheckCircle, AlertCircle, Lock,
@@ -137,8 +137,20 @@ export default function Profile() {
                 profile: profileData
             });
 
-            setSuccess('Profile updated successfully!');
-            setTimeout(() => setSuccess(null), 3000);
+            // Regenerate QR code for patients after profile update
+            if (profile?.type === 'PATIENT') {
+                try {
+                    await qrAPI.getQRData();
+                    setSuccess('Profile updated successfully! Your QR code has been regenerated.');
+                } catch (qrErr) {
+                    // QR regeneration failed but profile was saved
+                    setSuccess('Profile updated successfully! (QR code update pending)');
+                }
+            } else {
+                setSuccess('Profile updated successfully!');
+            }
+
+            setTimeout(() => setSuccess(null), 4000);
         } catch (err) {
             setError(err.response?.data?.error || 'Failed to save profile');
         } finally {

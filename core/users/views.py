@@ -152,6 +152,7 @@ class PatientQRCodeView(views.APIView):
 class GetQRDataView(views.APIView):
     """
     Get QR code data as JSON (for frontend to generate QR).
+    Contains all patient profile data for hospital form filling.
     """
     permission_classes = [IsAuthenticated]
     
@@ -169,12 +170,27 @@ class GetQRDataView(views.APIView):
         
         signature = generate_qr_signature(patient.abha_id, patient.id)
         
+        # Include all profile data for hospital form filling
         return Response({
             "qr_data": {
-                "v": "1.0",
-                "a": patient.abha_id,
-                "p": patient.id,
-                "s": signature
+                "version": "2.0",
+                "abha_id": patient.abha_id,
+                "patient_id": patient.id,
+                "signature": signature,
+                # User info
+                "first_name": request.user.first_name,
+                "last_name": request.user.last_name,
+                "email": request.user.email,
+                "phone_number": request.user.phone_number or "",
+                # Patient profile data
+                "date_of_birth": str(patient.dob) if patient.dob else "",
+                "gender": patient.gender or "",
+                "blood_group": patient.blood_group or "",
+                "address": patient.address or "",
+                "emergency_contact_name": patient.emergency_contact_name or "",
+                "emergency_contact_phone": patient.emergency_contact_phone or "",
+                "allergies": patient.allergies or "",
+                "current_medications": patient.current_medications or "",
             }
         })
 
@@ -183,6 +199,7 @@ class QRScanView(views.APIView):
     """
     Scan/decode QR and return patient data for form filling.
     Used by hospital staff to auto-fill registration forms.
+    Supports both v1.0 (minimal) and v2.0 (full profile) QR formats.
     """
     permission_classes = [IsAuthenticated]
     
@@ -202,10 +219,11 @@ class QRScanView(views.APIView):
             except json.JSONDecodeError:
                 return Response({"error": "Invalid QR data format"}, status=status.HTTP_400_BAD_REQUEST)
         
-        # Extract fields
-        abha_id = qr_data.get('a')
-        patient_id = qr_data.get('p')
-        signature = qr_data.get('s')
+        # Extract fields - support both old abbreviated and new descriptive names
+        abha_id = qr_data.get('abha_id') or qr_data.get('a')
+        patient_id = qr_data.get('patient_id') or qr_data.get('p')
+        signature = qr_data.get('signature') or qr_data.get('s')
+        version = qr_data.get('version') or qr_data.get('v', '1.0')
         
         if not all([abha_id, patient_id, signature]):
             return Response({"error": "Invalid QR: missing required fields"}, status=status.HTTP_400_BAD_REQUEST)
@@ -214,7 +232,31 @@ class QRScanView(views.APIView):
         if not verify_qr_signature(abha_id, patient_id, signature):
             return Response({"error": "Invalid QR: signature verification failed"}, status=status.HTTP_403_FORBIDDEN)
         
-        # Fetch patient data
+        # For v2.0 QR codes, use embedded data (faster, no DB lookup required)
+        # Support both old abbreviated and new descriptive field names
+        first_name = qr_data.get('first_name') or qr_data.get('fn')
+        if version == "2.0" and first_name is not None:
+            last_name = qr_data.get('last_name') or qr_data.get('ln', '')
+            email = qr_data.get('email') or qr_data.get('e', '')
+            return Response({
+                "patient_id": patient_id,
+                "abha_id": abha_id,
+                "name": f"{first_name} {last_name}".strip() or email,
+                "email": email,
+                "phone_number": qr_data.get('phone_number') or qr_data.get('ph', ''),
+                "date_of_birth": qr_data.get('date_of_birth') or qr_data.get('dob', ''),
+                "gender": qr_data.get('gender') or qr_data.get('g', ''),
+                "blood_group": qr_data.get('blood_group') or qr_data.get('bg', ''),
+                "address": qr_data.get('address') or qr_data.get('addr', ''),
+                "emergency_contact": {
+                    "name": qr_data.get('emergency_contact_name') or qr_data.get('ecn', ''),
+                    "phone": qr_data.get('emergency_contact_phone') or qr_data.get('ecp', '')
+                },
+                "allergies": qr_data.get('allergies') or qr_data.get('alg', ''),
+                "current_medications": qr_data.get('current_medications') or qr_data.get('med', '')
+            })
+        
+        # For v1.0 or fallback: Fetch patient data from database
         try:
             patient = PatientProfile.objects.get(id=patient_id, abha_id=abha_id)
         except PatientProfile.DoesNotExist:

@@ -117,7 +117,7 @@ export default function HealthJourneys() {
                                             <button
                                                 onClick={(e) => {
                                                     e.stopPropagation();
-                                                    navigate(`/patient/book-appointment?journey_id=${journey.id}`);
+                                                    navigate(`/patient/appointments/book?journey_id=${journey.id}`);
                                                 }}
                                                 className="px-3 py-1.5 bg-brand-mint/20 text-brand-mint rounded-lg text-xs font-medium hover:bg-brand-mint/30 transition-colors flex items-center gap-1"
                                             >
