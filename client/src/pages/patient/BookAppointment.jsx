@@ -213,7 +213,7 @@ export default function BookAppointment() {
                                 value={selectedDate}
                                 onChange={(e) => setSelectedDate(e.target.value)}
                                 min={getMinDate()}
-                                className="w-full px-4 py-3 bg-brand-dark/50 border border-brand-cream/20 rounded-lg text-brand-cream focus:outline-none focus:border-brand-mint"
+                                className="w-full px-4 py-3 bg-brand-dark/50 border border-brand-cream/20 rounded-lg text-brand-cream focus:outline-none focus:border-brand-mint [color-scheme:dark]"
                             />
                         </div>
 
@@ -255,8 +255,8 @@ export default function BookAppointment() {
                                 setSelectedJourneyId(null);
                             }}
                             className={`flex-1 py-3 px-4 rounded-lg border transition-all ${!isFollowUp
-                                    ? 'bg-brand-mint/20 border-brand-mint text-brand-cream'
-                                    : 'bg-brand-dark/30 border-brand-cream/20 text-brand-cream/60 hover:border-brand-cream/40'
+                                ? 'bg-brand-mint/20 border-brand-mint text-brand-cream'
+                                : 'bg-brand-dark/30 border-brand-cream/20 text-brand-cream/60 hover:border-brand-cream/40'
                                 }`}
                         >
                             <p className="font-medium">New Consultation</p>
@@ -266,8 +266,8 @@ export default function BookAppointment() {
                             onClick={() => setIsFollowUp(true)}
                             disabled={journeys.length === 0}
                             className={`flex-1 py-3 px-4 rounded-lg border transition-all ${isFollowUp
-                                    ? 'bg-brand-mint/20 border-brand-mint text-brand-cream'
-                                    : 'bg-brand-dark/30 border-brand-cream/20 text-brand-cream/60 hover:border-brand-cream/40'
+                                ? 'bg-brand-mint/20 border-brand-mint text-brand-cream'
+                                : 'bg-brand-dark/30 border-brand-cream/20 text-brand-cream/60 hover:border-brand-cream/40'
                                 } ${journeys.length === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
                         >
                             <p className="font-medium">Follow-up</p>
@@ -307,8 +307,8 @@ export default function BookAppointment() {
                                             key={journey.id}
                                             onClick={() => setSelectedJourneyId(journey.id)}
                                             className={`w-full p-3 rounded-lg border text-left transition-all ${selectedJourneyId === journey.id
-                                                    ? 'bg-brand-mint/20 border-brand-mint'
-                                                    : 'bg-brand-dark/30 border-brand-cream/20 hover:border-brand-cream/40'
+                                                ? 'bg-brand-mint/20 border-brand-mint'
+                                                : 'bg-brand-dark/30 border-brand-cream/20 hover:border-brand-cream/40'
                                                 }`}
                                         >
                                             <p className="font-medium">{journey.title}</p>

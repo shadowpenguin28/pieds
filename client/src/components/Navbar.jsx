@@ -1,6 +1,7 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { LogIn, LogOut, User, Stethoscope, Building2 } from 'lucide-react';
+import logo from '../assets/logo.png';
 
 const Navbar = () => {
     const { isAuthenticated, isPatient, isDoctor, isProvider, user, logout } = useAuth();
@@ -27,8 +28,11 @@ const Navbar = () => {
     return (
         <nav className="fixed top-0 left-0 right-0 z-50 backdrop-blur-md bg-brand-dark/50 border-b border-brand-cream/10">
             <div className="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
-                <Link to="/" className="text-xl font-bold bg-gradient-to-r from-brand-mint to-brand-cream bg-clip-text text-transparent">
-                    Crescare
+                <Link to="/" className="flex items-center gap-2">
+                    <img src={logo} alt="Crescare" className="h-8 w-auto" />
+                    <span className="text-xl font-bold bg-gradient-to-r from-brand-mint to-brand-cream bg-clip-text text-transparent">
+                        Crescare
+                    </span>
                 </Link>
 
                 <div className="flex items-center gap-6 text-sm font-medium">

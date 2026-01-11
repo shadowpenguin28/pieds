@@ -318,7 +318,7 @@ class WaitTimeView(views.APIView):
             scheduled_time__lte=end_of_day,
             scheduled_time__lt=appointment.scheduled_time,
             status__in=['SCHEDULED', 'IN_PROGRESS', 'CHECKED_IN']
-        ).exclude(id=appointment.id).coint()
+        ).exclude(id=appointment.id).count()
         
         # Calculate predicted start time based on queue
         # Check if there's an appointment in progress

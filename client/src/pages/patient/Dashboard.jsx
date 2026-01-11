@@ -208,60 +208,65 @@ export default function PatientDashboard() {
     const location = useLocation();
 
     return (
-        <div className="max-w-7xl mx-auto px-4 py-8">
-            <div className="flex gap-8">
-                {/* Sidebar */}
-                <aside className="w-64 flex-shrink-0 hidden lg:flex lg:items-center">
-                    <nav className="bg-brand-slate/50 rounded-xl p-4 border border-brand-cream/10 sticky top-24 w-full">
-                        <div className="flex items-center gap-3 mb-6 pb-4 border-b border-brand-cream/10">
-                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-brand-mint to-brand-teal flex items-center justify-center">
-                                <User className="w-5 h-5 text-brand-dark" />
-                            </div>
-                            <div>
-                                <p className="font-medium text-sm">Patient Portal</p>
-                                <p className="text-xs text-brand-cream/60">Manage your health</p>
-                            </div>
+        <div className="min-h-screen pt-20">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="flex gap-8">
+                    {/* Fixed Sidebar */}
+                    <aside className="w-64 flex-shrink-0 hidden lg:block">
+                        <div className="sticky top-24">
+                            <nav className="bg-brand-slate/50 rounded-xl p-4 border border-brand-cream/10">
+                                <div className="flex items-center gap-3 mb-6 pb-4 border-b border-brand-cream/10">
+                                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-brand-mint to-brand-teal flex items-center justify-center">
+                                        <User className="w-5 h-5 text-brand-dark" />
+                                    </div>
+                                    <div>
+                                        <p className="font-medium text-sm">Patient Portal</p>
+                                        <p className="text-xs text-brand-cream/60">Manage your health</p>
+                                    </div>
+                                </div>
+                                <ul className="space-y-1">
+                                    {NAV_ITEMS.map(item => {
+                                        const isActive = item.exact
+                                            ? location.pathname === item.path
+                                            : location.pathname.startsWith(item.path);
+                                        return (
+                                            <li key={item.path}>
+                                                <Link
+                                                    to={item.path}
+                                                    className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${isActive
+                                                        ? 'bg-brand-mint/20 text-brand-mint'
+                                                        : 'text-brand-cream/70 hover:bg-brand-cream/5'
+                                                        }`}
+                                                >
+                                                    <item.icon className="w-5 h-5" />
+                                                    <span className="text-sm">{item.label}</span>
+                                                </Link>
+                                            </li>
+                                        );
+                                    })}
+                                </ul>
+                            </nav>
                         </div>
-                        <ul className="space-y-1">
-                            {NAV_ITEMS.map(item => {
-                                const isActive = item.exact
-                                    ? location.pathname === item.path
-                                    : location.pathname.startsWith(item.path);
-                                return (
-                                    <li key={item.path}>
-                                        <Link
-                                            to={item.path}
-                                            className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors ${isActive
-                                                ? 'bg-brand-mint/20 text-brand-mint'
-                                                : 'text-brand-cream/70 hover:bg-brand-cream/5'
-                                                }`}
-                                        >
-                                            <item.icon className="w-5 h-5" />
-                                            <span className="text-sm">{item.label}</span>
-                                        </Link>
-                                    </li>
-                                );
-                            })}
-                        </ul>
-                    </nav>
-                </aside>
+                    </aside>
 
-                {/* Main Content */}
-                <main className="flex-1 min-w-0">
-                    <Routes>
-                        <Route index element={<Overview />} />
-                        <Route path="qr" element={<PatientQR />} />
-                        <Route path="appointments" element={<PatientAppointments />} />
-                        <Route path="appointments/book" element={<BookAppointment />} />
-                        <Route path="book-appointment" element={<Navigate to="/patient/appointments/book" replace />} />
-                        <Route path="wait-time/:appointmentId" element={<WaitTime />} />
-                        <Route path="journeys" element={<HealthJourneys />} />
-                        <Route path="consents" element={<Consents />} />
-                        <Route path="wallet" element={<PatientWallet />} />
-                        <Route path="profile" element={<Profile />} />
-                    </Routes>
-                </main>
+                    {/* Main Content */}
+                    <main className="flex-1 min-w-0 py-4">
+                        <Routes>
+                            <Route index element={<Overview />} />
+                            <Route path="qr" element={<PatientQR />} />
+                            <Route path="appointments" element={<PatientAppointments />} />
+                            <Route path="appointments/book" element={<BookAppointment />} />
+                            <Route path="book-appointment" element={<Navigate to="/patient/appointments/book" replace />} />
+                            <Route path="wait-time/:appointmentId" element={<WaitTime />} />
+                            <Route path="journeys" element={<HealthJourneys />} />
+                            <Route path="consents" element={<Consents />} />
+                            <Route path="wallet" element={<PatientWallet />} />
+                            <Route path="profile" element={<Profile />} />
+                        </Routes>
+                    </main>
+                </div>
             </div>
         </div>
     );
 }
+

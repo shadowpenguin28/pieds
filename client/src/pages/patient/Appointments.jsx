@@ -21,13 +21,20 @@ export default function PatientAppointments() {
     const [loading, setLoading] = useState(true);
     const [payingId, setPayingId] = useState(null);
     const [message, setMessage] = useState(null);
+    const [showAll, setShowAll] = useState(false);
 
     const [cancelTarget, setCancelTarget] = useState(null);
+
+    const INITIAL_DISPLAY_COUNT = 5;
 
     const fetchAppointments = async () => {
         try {
             const res = await appointmentAPI.list();
-            setAppointments(res.data);
+            // Sort by scheduled_time descending (most recent first)
+            const sorted = res.data.sort((a, b) =>
+                new Date(b.scheduled_time) - new Date(a.scheduled_time)
+            );
+            setAppointments(sorted);
         } catch (err) {
             console.error(err);
         } finally {
@@ -124,7 +131,7 @@ export default function PatientAppointments() {
                 </div>
             ) : (
                 <div className="space-y-4">
-                    {appointments.map(appt => {
+                    {(showAll ? appointments : appointments.slice(0, INITIAL_DISPLAY_COUNT)).map(appt => {
                         const status = STATUS_STYLES[appt.status] || STATUS_STYLES.SCHEDULED;
                         const isPaid = appt.is_paid;
                         const canPay = appt.status === 'SCHEDULED' && !isPaid;
@@ -206,15 +213,21 @@ export default function PatientAppointments() {
                                             <Clock className="w-4 h-4" />
                                         </button>
                                     )}
-
-
-
-
                                 </div>
                             </div>
                         );
 
                     })}
+
+                    {/* View All / Show Less button */}
+                    {appointments.length > INITIAL_DISPLAY_COUNT && (
+                        <button
+                            onClick={() => setShowAll(!showAll)}
+                            className="w-full py-3 mt-2 bg-brand-slate/50 border border-brand-cream/10 rounded-xl text-brand-cream/70 hover:text-brand-mint hover:border-brand-mint/30 transition-colors font-medium"
+                        >
+                            {showAll ? 'Show Less' : `View All (${appointments.length} appointments)`}
+                        </button>
+                    )}
                 </div>
             )}
             {/* Cancel Confirmation Modal */}

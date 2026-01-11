@@ -28,7 +28,7 @@ function App() {
       <Router>
         <div className="min-h-screen text-brand-cream font-sans selection:bg-brand-mint/30" style={{ background: 'hsl(222 47% 6%)' }}>
           <Navbar />
-          <main>
+          <main className="pt-16">
             <Routes>
               {/* Public Routes */}
               <Route path="/" element={<LandingPageB2C />} />
