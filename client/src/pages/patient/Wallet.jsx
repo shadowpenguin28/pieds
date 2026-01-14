@@ -101,8 +101,8 @@ export default function PatientWallet() {
 
                 {message && (
                     <div className={`p-3 rounded-lg mb-4 text-sm ${message.type === 'success'
-                            ? 'bg-green-500/20 text-green-300 border border-green-500/30'
-                            : 'bg-brand-red/20 text-brand-red border border-brand-red/30'
+                        ? 'bg-green-500/20 text-green-300 border border-green-500/30'
+                        : 'bg-brand-red/20 text-brand-red border border-brand-red/30'
                         }`}>
                         {message.text}
                     </div>

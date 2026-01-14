@@ -110,11 +110,12 @@ class HealthDataConsentSerializer(serializers.ModelSerializer):
     requesting_org_name = serializers.SerializerMethodField()
     requesting_doctor_name = serializers.SerializerMethodField()
     patient_name = serializers.SerializerMethodField()
+    patient_abha_id = serializers.SerializerMethodField()
     
     class Meta:
         model = HealthDataConsent
         fields = [
-            'id', 'patient', 'patient_name',
+            'id', 'patient', 'patient_name', 'patient_abha_id',
             'requesting_org', 'requesting_org_name',
             'requesting_doctor', 'requesting_doctor_name',
             'status', 'purpose',
@@ -132,6 +133,9 @@ class HealthDataConsentSerializer(serializers.ModelSerializer):
     
     def get_patient_name(self, obj):
         return f"{obj.patient.user.first_name} {obj.patient.user.last_name}"
+    
+    def get_patient_abha_id(self, obj):
+        return obj.patient.abha_id
 
 
 class ConsentRequestSerializer(serializers.Serializer):
@@ -152,6 +156,7 @@ class OrderTestSerializer(serializers.Serializer):
     journey_id = serializers.IntegerField()
     test_name = serializers.CharField(max_length=255)
     notes = serializers.CharField(required=False, allow_blank=True)
+    lab_id = serializers.IntegerField(required=False, allow_null=True)
 
 
 class WritePrescriptionSerializer(serializers.Serializer):

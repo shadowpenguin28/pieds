@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { journeyAPI } from '../../api/client';
 import {
     FileSearch, Search, RefreshCw, CheckCircle, Clock, XCircle,
-    User, AlertCircle, FileText, ChevronRight
+    User, AlertCircle, FileText, ChevronRight, Eye
 } from 'lucide-react';
 
 const STATUS_STYLES = {
@@ -23,6 +23,28 @@ export default function RequestAccess() {
     const [patientData, setPatientData] = useState(null);
     const [loadingData, setLoadingData] = useState(false);
 
+    // List of all consent requests
+    const [consents, setConsents] = useState([]);
+    const [consentsLoading, setConsentsLoading] = useState(true);
+    const [selectedPatientAbha, setSelectedPatientAbha] = useState(null);
+
+    // Fetch consents on mount
+    useEffect(() => {
+        fetchConsents();
+    }, []);
+
+    const fetchConsents = async () => {
+        setConsentsLoading(true);
+        try {
+            const res = await journeyAPI.getDoctorConsents();
+            setConsents(res.data);
+        } catch (err) {
+            console.error('Failed to fetch consents:', err);
+        } finally {
+            setConsentsLoading(false);
+        }
+    };
+
     const handleRequestAccess = async (e) => {
         e.preventDefault();
         if (!abhaId.trim()) return;
@@ -30,12 +52,15 @@ export default function RequestAccess() {
         setLoading(true);
         setError(null);
         setResult(null);
+        setPatientData(null);
 
         try {
             const res = await journeyAPI.requestAccess(abhaId.trim(), purpose);
+            console.log('Request Access Response:', res.data);
+            console.log('Consent Status:', res.data.consent?.status);
             setResult(res.data);
 
-            // If access was already granted, fetch the data
+            // If access was already granted, automatically fetch the data
             if (res.data.consent?.status === 'GRANTED') {
                 fetchPatientData(abhaId.trim());
             }
@@ -170,24 +195,25 @@ export default function RequestAccess() {
                                 })()}
                             </div>
                         )}
-
-                        {result.consent?.status === 'GRANTED' && !patientData && (
-                            <button
-                                onClick={handleViewData}
-                                disabled={loadingData}
-                                className="mt-4 px-4 py-2 bg-brand-mint/20 text-brand-mint rounded-lg hover:bg-brand-mint/30 transition-colors flex items-center gap-2"
-                            >
-                                {loadingData ? (
-                                    <RefreshCw className="w-4 h-4 animate-spin" />
-                                ) : (
-                                    <>
-                                        <FileText className="w-4 h-4" />
-                                        View Patient Data
-                                    </>
-                                )}
-                            </button>
-                        )}
                     </div>
+
+                    {/* View Patient Data button - show when consent is granted */}
+                    {result.consent?.status === 'GRANTED' && (
+                        <button
+                            onClick={handleViewData}
+                            disabled={loadingData}
+                            className="w-full mt-4 py-3 bg-gradient-to-r from-brand-mint to-brand-teal text-brand-dark font-semibold rounded-xl hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-2"
+                        >
+                            {loadingData ? (
+                                <RefreshCw className="w-5 h-5 animate-spin" />
+                            ) : (
+                                <>
+                                    <FileText className="w-5 h-5" />
+                                    View Patient Health Records
+                                </>
+                            )}
+                        </button>
+                    )}
                 </div>
             )}
 
@@ -254,6 +280,126 @@ export default function RequestAccess() {
                     </div>
                 </div>
             )}
+
+            {/* Consent Requests Section */}
+            <div className="bg-brand-slate/50 rounded-xl border border-brand-cream/10 overflow-hidden">
+                <div className="p-4 border-b border-brand-cream/10 flex items-center justify-between">
+                    <h2 className="font-semibold flex items-center gap-2">
+                        <FileText className="w-5 h-5 text-brand-mint" />
+                        Your Consent Requests
+                    </h2>
+                    <button
+                        onClick={fetchConsents}
+                        className="p-2 hover:bg-brand-dark/50 rounded-lg transition-colors"
+                    >
+                        <RefreshCw className={`w-4 h-4 ${consentsLoading ? 'animate-spin' : ''}`} />
+                    </button>
+                </div>
+
+                {consentsLoading ? (
+                    <div className="p-8 text-center">
+                        <RefreshCw className="w-6 h-6 animate-spin text-brand-mint mx-auto" />
+                    </div>
+                ) : consents.length === 0 ? (
+                    <div className="p-8 text-center text-brand-cream/50">
+                        <FileSearch className="w-10 h-10 mx-auto mb-2 opacity-50" />
+                        <p>No consent requests yet</p>
+                        <p className="text-xs mt-1">Use the form above to request patient records</p>
+                    </div>
+                ) : (
+                    <div className="divide-y divide-brand-cream/10">
+                        {/* Pending Requests */}
+                        {consents.filter(c => c.status === 'PENDING').length > 0 && (
+                            <div className="p-4">
+                                <h3 className="text-sm font-medium text-yellow-400 mb-3 flex items-center gap-2">
+                                    <Clock className="w-4 h-4" />
+                                    Pending ({consents.filter(c => c.status === 'PENDING').length})
+                                </h3>
+                                <div className="space-y-2">
+                                    {consents.filter(c => c.status === 'PENDING').map(consent => (
+                                        <div key={consent.id} className="flex items-center justify-between p-3 bg-yellow-500/10 rounded-lg border border-yellow-500/20">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-8 h-8 rounded-full bg-yellow-500/20 flex items-center justify-center">
+                                                    <User className="w-4 h-4 text-yellow-400" />
+                                                </div>
+                                                <div>
+                                                    <p className="font-medium text-sm">{consent.patient_name}</p>
+                                                    <p className="text-xs text-brand-cream/50">Awaiting patient approval</p>
+                                                </div>
+                                            </div>
+                                            <span className="px-2 py-1 bg-yellow-500/20 text-yellow-300 text-xs rounded-full">Pending</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Granted Requests */}
+                        {consents.filter(c => c.status === 'GRANTED').length > 0 && (
+                            <div className="p-4">
+                                <h3 className="text-sm font-medium text-green-400 mb-3 flex items-center gap-2">
+                                    <CheckCircle className="w-4 h-4" />
+                                    Granted Access ({consents.filter(c => c.status === 'GRANTED').length})
+                                </h3>
+                                <div className="space-y-2">
+                                    {consents.filter(c => c.status === 'GRANTED').map(consent => (
+                                        <div key={consent.id} className="flex items-center justify-between p-3 bg-green-500/10 rounded-lg border border-green-500/20">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center">
+                                                    <User className="w-4 h-4 text-green-400" />
+                                                </div>
+                                                <div>
+                                                    <p className="font-medium text-sm">{consent.patient_name}</p>
+                                                    <p className="text-xs text-brand-cream/50">
+                                                        Granted {consent.responded_at ? new Date(consent.responded_at).toLocaleDateString('en-IN') : ''}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            <button
+                                                onClick={() => {
+                                                    // Clear previous results and fetch patient data by ABHA ID
+                                                    setResult(null);
+                                                    setPatientData(null);
+                                                    fetchPatientData(consent.patient_abha_id);
+                                                }}
+                                                className="px-3 py-1.5 bg-green-500/20 text-green-300 text-sm rounded-lg hover:bg-green-500/30 transition-colors flex items-center gap-1"
+                                            >
+                                                <Eye className="w-4 h-4" />
+                                                View Records
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Denied/Revoked Requests */}
+                        {consents.filter(c => c.status === 'DENIED' || c.status === 'REVOKED').length > 0 && (
+                            <div className="p-4">
+                                <h3 className="text-sm font-medium text-red-400 mb-3 flex items-center gap-2">
+                                    <XCircle className="w-4 h-4" />
+                                    Denied/Revoked ({consents.filter(c => c.status === 'DENIED' || c.status === 'REVOKED').length})
+                                </h3>
+                                <div className="space-y-2">
+                                    {consents.filter(c => c.status === 'DENIED' || c.status === 'REVOKED').map(consent => (
+                                        <div key={consent.id} className="flex items-center justify-between p-3 bg-red-500/10 rounded-lg border border-red-500/20">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-8 h-8 rounded-full bg-red-500/20 flex items-center justify-center">
+                                                    <User className="w-4 h-4 text-red-400" />
+                                                </div>
+                                                <div>
+                                                    <p className="font-medium text-sm">{consent.patient_name}</p>
+                                                    <p className="text-xs text-brand-cream/50">{consent.status}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                )}
+            </div>
         </div>
     );
 }

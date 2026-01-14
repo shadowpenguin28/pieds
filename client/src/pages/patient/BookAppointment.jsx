@@ -101,10 +101,24 @@ export default function BookAppointment() {
             setMessage({ type: 'success', text: 'Appointment booked successfully!' });
             setTimeout(() => navigate('/patient/appointments'), 1500);
         } catch (err) {
-            setMessage({
-                type: 'error',
-                text: err.response?.data?.error || err.response?.data?.detail || 'Booking failed'
-            });
+            // Check for slot conflict error
+            const errorData = err.response?.data;
+            const slotError = errorData?.scheduled_time;
+
+            if (slotError) {
+                // Slot conflict - show specific notification
+                setMessage({
+                    type: 'error',
+                    text: '⚠️ This slot is unavailable. Please select a different time.'
+                });
+                // Reset time selection so user picks another slot
+                setSelectedTime('');
+            } else {
+                setMessage({
+                    type: 'error',
+                    text: errorData?.error || errorData?.detail || 'Booking failed. Please try again.'
+                });
+            }
         } finally {
             setBooking(false);
         }
@@ -184,7 +198,7 @@ export default function BookAppointment() {
                                 <div className="text-right">
                                     <div className="flex items-center gap-1 text-brand-mint">
                                         <IndianRupee className="w-4 h-4" />
-                                        <span className="font-semibold">{doc.consultation_fee}</span>
+                                        <span className="font-semibold">{Math.ceil(doc.consultation_fee * 1.05)}</span>
                                     </div>
                                     {selectedDoctor?.id === doc.id && (
                                         <Check className="w-5 h-5 text-brand-mint ml-auto mt-1" />
@@ -374,8 +388,9 @@ export default function BookAppointment() {
                     </div>
                     <div className="flex items-center justify-between pt-4 border-t border-brand-mint/20">
                         <div>
-                            <p className="text-brand-cream/60 text-sm">Consultation Fee</p>
-                            <p className="text-2xl font-bold text-brand-mint">₹{selectedDoctor.consultation_fee}</p>
+                            <p className="text-brand-cream/60 text-sm">Total Amount</p>
+                            <p className="text-2xl font-bold text-brand-mint">₹{Math.ceil(selectedDoctor.consultation_fee * 1.05)}</p>
+                            <p className="text-xs text-brand-cream/50">Includes 5% platform fee</p>
                         </div>
                         <button
                             onClick={handleBook}

@@ -80,6 +80,23 @@ class DoctorListView(views.APIView):
         return Response(data)
 
 
+class LabListView(views.APIView):
+    """List all lab providers for test ordering"""
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        labs = ProviderProfile.objects.filter(type='LAB')
+        data = []
+        for lab in labs:
+            data.append({
+                'id': lab.id,
+                'name': lab.name,
+                'address': lab.address,
+                'hfr_id': lab.hfr_id,
+            })
+        return Response(data)
+
+
 # ============ QR Code APIs ============
 
 def generate_qr_signature(abha_id, patient_id):

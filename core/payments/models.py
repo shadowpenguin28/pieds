@@ -16,6 +16,9 @@ TRANSACTION_REASONS = (
     ("WITHDRAWAL", "Withdrawal"),
 )
 
+# Platform commission rate (5%)
+COMMISSION_RATE = Decimal("0.05")
+
 
 class Wallet(models.Model):
     """Virtual wallet for all users (patients, doctors, providers)"""

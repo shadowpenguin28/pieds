@@ -177,6 +177,24 @@ class PatientConsentListView(generics.ListAPIView):
         return HealthDataConsent.objects.filter(patient=self.request.user.patient_profile)
 
 
+class DoctorConsentListView(generics.ListAPIView):
+    """List all consent requests made by the doctor's organization"""
+    permission_classes = [IsAuthenticated]
+    serializer_class = HealthDataConsentSerializer
+    
+    def get_queryset(self):
+        if not self.request.user.is_doctor:
+            return HealthDataConsent.objects.none()
+        
+        doctor = self.request.user.doctor_profile
+        org = doctor.organization
+        
+        if not org:
+            return HealthDataConsent.objects.none()
+        
+        return HealthDataConsent.objects.filter(requesting_org=org).order_by('-requested_at')
+
+
 class ConsentRespondView(views.APIView):
     """Patient grants or denies a consent request"""
     permission_classes = [IsAuthenticated]
@@ -394,6 +412,7 @@ class OrderTestView(views.APIView):
         journey_id = serializer.validated_data['journey_id']
         test_name = serializer.validated_data['test_name']
         notes = serializer.validated_data.get('notes', '')
+        lab_id = serializer.validated_data.get('lab_id')
         
         doctor = request.user.doctor_profile
         org = doctor.organization
@@ -416,6 +435,15 @@ class OrderTestView(views.APIView):
         if not (journey_from_own_org or has_consent):
             return Response({"error": "Consent required to modify this journey"}, status=status.HTTP_403_FORBIDDEN)
         
+        # Get assigned lab if specified
+        from users.models import ProviderProfile
+        assigned_lab = None
+        if lab_id:
+            try:
+                assigned_lab = ProviderProfile.objects.get(id=lab_id, type='LAB')
+            except ProviderProfile.DoesNotExist:
+                return Response({"error": "Lab not found"}, status=status.HTTP_404_NOT_FOUND)
+        
         # Create TEST step
         step_order = journey.steps.count() + 1
         step = JourneyStep.objects.create(
@@ -424,13 +452,16 @@ class OrderTestView(views.APIView):
             order=step_order,
             notes=f"{test_name}: {notes}" if notes else test_name,
             created_by_org=org,
-            created_by_doctor=doctor
+            created_by_doctor=doctor,
+            assigned_lab=assigned_lab
         )
         
+        lab_name = assigned_lab.name if assigned_lab else "any lab"
         return Response({
-            "message": f"Test '{test_name}' ordered successfully",
+            "message": f"Test '{test_name}' ordered successfully with {lab_name}",
             "step_id": step.id,
-            "journey_id": journey.id
+            "journey_id": journey.id,
+            "assigned_lab": {"id": assigned_lab.id, "name": assigned_lab.name} if assigned_lab else None
         }, status=status.HTTP_201_CREATED)
 
 

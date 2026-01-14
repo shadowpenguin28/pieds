@@ -8,7 +8,10 @@ import {
 const STATUS_STYLES = {
     PENDING: { bg: 'bg-yellow-500/20', text: 'text-yellow-300', label: 'Pending' },
     APPROVED: { bg: 'bg-green-500/20', text: 'text-green-300', label: 'Approved' },
+    GRANTED: { bg: 'bg-green-500/20', text: 'text-green-300', label: 'Granted' },
     REJECTED: { bg: 'bg-red-500/20', text: 'text-red-300', label: 'Rejected' },
+    DENIED: { bg: 'bg-red-500/20', text: 'text-red-300', label: 'Denied' },
+    REVOKED: { bg: 'bg-gray-500/20', text: 'text-gray-400', label: 'Revoked' },
     EXPIRED: { bg: 'bg-gray-500/20', text: 'text-gray-400', label: 'Expired' },
 };
 
@@ -41,7 +44,7 @@ export default function Consents() {
             await journeyAPI.respondConsent(consentId, status);
             setMessage({
                 type: 'success',
-                text: `Consent ${status === 'APPROVED' ? 'granted' : 'denied'} successfully`
+                text: `Consent ${status === 'GRANTED' ? 'granted' : 'denied'} successfully`
             });
             fetchConsents();
         } catch (err) {
@@ -81,9 +84,30 @@ export default function Consents() {
                 Control who can access your health records
             </p>
 
+            {/* Grant Consent Button */}
+            <div className="bg-brand-slate/50 rounded-xl p-4 border border-brand-cream/10 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-brand-mint/20 flex items-center justify-center">
+                        <Shield className="w-5 h-5 text-brand-mint" />
+                    </div>
+                    <div>
+                        <p className="font-medium">Grant New Consent</p>
+                        <p className="text-xs text-brand-cream/50">Allow a healthcare provider to access your records</p>
+                    </div>
+                </div>
+                <button
+                    onClick={() => setMessage({ type: 'info', text: 'Ask your doctor to request access using your ABHA ID' })}
+                    className="px-4 py-2 bg-brand-mint/20 text-brand-mint border border-brand-mint/30 rounded-lg hover:bg-brand-mint/30 transition-colors text-sm font-medium"
+                >
+                    How to Grant
+                </button>
+            </div>
+
             {message && (
                 <div className={`p-4 rounded-xl flex items-center gap-2 ${message.type === 'success'
-                        ? 'bg-green-500/20 text-green-300 border border-green-500/30'
+                    ? 'bg-green-500/20 text-green-300 border border-green-500/30'
+                    : message.type === 'info'
+                        ? 'bg-blue-500/20 text-blue-300 border border-blue-500/30'
                         : 'bg-brand-red/20 text-brand-red border border-brand-red/30'
                     }`}>
                     {message.type === 'success' ? <CheckCircle className="w-5 h-5" /> : <AlertCircle className="w-5 h-5" />}
@@ -107,8 +131,8 @@ export default function Consents() {
                                         <User className="w-6 h-6 text-yellow-400" />
                                     </div>
                                     <div>
-                                        <h3 className="font-semibold">{consent.requester_name || 'Healthcare Provider'}</h3>
-                                        <p className="text-sm text-brand-cream/60">{consent.requester_type || 'Doctor'}</p>
+                                        <h3 className="font-semibold">{consent.requesting_org_name || 'Healthcare Provider'}</h3>
+                                        <p className="text-sm text-brand-cream/60">{consent.requesting_doctor_name || 'Doctor'}</p>
                                     </div>
                                 </div>
                                 <span className="px-3 py-1 rounded-full text-xs font-medium bg-yellow-500/20 text-yellow-300">
@@ -123,12 +147,12 @@ export default function Consents() {
 
                             <div className="flex items-center gap-2 text-xs text-brand-cream/50 mb-4">
                                 <Clock className="w-3 h-3" />
-                                Requested: {new Date(consent.created_at).toLocaleString('en-IN')}
+                                Requested: {consent.requested_at ? new Date(consent.requested_at).toLocaleString('en-IN') : 'Unknown'}
                             </div>
 
                             <div className="flex gap-3">
                                 <button
-                                    onClick={() => handleRespond(consent.id, 'APPROVED')}
+                                    onClick={() => handleRespond(consent.id, 'GRANTED')}
                                     disabled={responding === consent.id}
                                     className="flex-1 py-2.5 bg-gradient-to-r from-brand-mint to-brand-teal text-brand-dark font-semibold rounded-lg flex items-center justify-center gap-2 hover:opacity-90 transition-opacity disabled:opacity-50"
                                 >
@@ -142,7 +166,7 @@ export default function Consents() {
                                     )}
                                 </button>
                                 <button
-                                    onClick={() => handleRespond(consent.id, 'REJECTED')}
+                                    onClick={() => handleRespond(consent.id, 'DENIED')}
                                     disabled={responding === consent.id}
                                     className="flex-1 py-2.5 bg-brand-red/20 text-brand-red border border-brand-red/30 font-semibold rounded-lg flex items-center justify-center gap-2 hover:bg-brand-red/30 transition-colors disabled:opacity-50"
                                 >
@@ -183,9 +207,9 @@ export default function Consents() {
                                                 <User className="w-5 h-5 text-brand-cream/60" />
                                             </div>
                                             <div>
-                                                <p className="font-medium">{consent.requester_name || 'Healthcare Provider'}</p>
+                                                <p className="font-medium">{consent.requesting_org_name || 'Healthcare Provider'}</p>
                                                 <p className="text-xs text-brand-cream/50">
-                                                    {new Date(consent.created_at).toLocaleDateString('en-IN')}
+                                                    {consent.requested_at ? new Date(consent.requested_at).toLocaleDateString('en-IN') : 'Unknown'}
                                                 </p>
                                             </div>
                                         </div>

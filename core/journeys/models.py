@@ -59,6 +59,15 @@ class JourneyStep(models.Model):
         blank=True,
         related_name="created_steps"
     )
+    
+    # For TEST steps: the lab assigned to conduct the test
+    assigned_lab = models.ForeignKey(
+        ProviderProfile,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="assigned_tests"
+    )
 
     class Meta:
         ordering = ['order']

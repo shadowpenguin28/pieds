@@ -3,13 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import { journeyAPI, reportAPI } from '../../api/client';
 import {
     RefreshCw, FileText, ChevronDown, ChevronRight, Download,
-    Stethoscope, FlaskConical, Calendar, CheckCircle, Clock, AlertCircle, CalendarPlus
+    Stethoscope, Calendar, CheckCircle, Clock, AlertCircle, CalendarPlus, Pill
 } from 'lucide-react';
 
 const STEP_TYPE_ICONS = {
-    CONSULTATION: Stethoscope,
-    TEST: FlaskConical,
-    FOLLOWUP: Calendar,
+    CONSULTATION: Stethoscope,  // Doctor appointment
+    FOLLOWUP: Calendar,         // Follow-up appointment
+    PHARMACY: Pill,             // Prescription
+    // TEST type intentionally has no icon - will use null
 };
 
 const STEP_STATUS_STYLES = {
@@ -148,7 +149,7 @@ export default function HealthJourneys() {
                                             <p className="text-brand-cream/50 text-center py-4">No steps in this journey yet</p>
                                         ) : (
                                             journey.steps.map((step, idx) => {
-                                                const StepIcon = STEP_TYPE_ICONS[step.type] || FileText;
+                                                const StepIcon = STEP_TYPE_ICONS[step.type];
                                                 const statusStyle = STEP_STATUS_STYLES[step.status] || STEP_STATUS_STYLES.PENDING;
                                                 const StatusIcon = statusStyle.icon;
 
@@ -164,9 +165,15 @@ export default function HealthJourneys() {
                                                 return (
                                                     <div key={step.id} className="flex items-start gap-4 p-4 bg-brand-dark/30 rounded-lg">
                                                         <div className="flex flex-col items-center">
-                                                            <div className="w-10 h-10 rounded-full bg-brand-mint/10 flex items-center justify-center">
-                                                                <StepIcon className="w-5 h-5 text-brand-mint" />
-                                                            </div>
+                                                            {StepIcon ? (
+                                                                <div className="w-10 h-10 rounded-full bg-brand-mint/10 flex items-center justify-center">
+                                                                    <StepIcon className="w-5 h-5 text-brand-mint" />
+                                                                </div>
+                                                            ) : (
+                                                                <div className="w-10 h-10 rounded-full bg-brand-cream/10 flex items-center justify-center">
+                                                                    <span className="w-2 h-2 rounded-full bg-brand-cream/30" />
+                                                                </div>
+                                                            )}
                                                             {idx < journey.steps.length - 1 && (
                                                                 <div className="w-0.5 h-8 bg-brand-cream/20 mt-2" />
                                                             )}

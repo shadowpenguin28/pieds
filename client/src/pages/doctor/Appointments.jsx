@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
-import { appointmentAPI } from '../../api/client';
+import { appointmentAPI, journeyAPI, labAPI } from '../../api/client';
 import {
     Calendar, RefreshCw, Clock, CheckCircle, XCircle, Play,
-    User, Phone, Filter, ChevronDown
+    User, Phone, Filter, ChevronDown, FlaskConical, Plus, X, Building2
 } from 'lucide-react';
 
 const STATUS_STYLES = {
@@ -16,9 +16,21 @@ export default function DoctorAppointments() {
     const [appointments, setAppointments] = useState([]);
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState('ALL'); // ALL, SCHEDULED, COMPLETED, CANCELLED
+    const [message, setMessage] = useState(null);
+
+    // Order Test modal state
+    const [orderTestModal, setOrderTestModal] = useState(null); // { journeyId, patientName }
+    const [testName, setTestName] = useState('');
+    const [testNotes, setTestNotes] = useState('');
+    const [ordering, setOrdering] = useState(false);
+
+    // Labs for selection
+    const [labs, setLabs] = useState([]);
+    const [selectedLabId, setSelectedLabId] = useState('');
 
     useEffect(() => {
         fetchAppointments();
+        fetchLabs();
     }, []);
 
     const fetchAppointments = async () => {
@@ -33,6 +45,15 @@ export default function DoctorAppointments() {
             console.error(err);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const fetchLabs = async () => {
+        try {
+            const res = await labAPI.list();
+            setLabs(res.data);
+        } catch (err) {
+            console.error('Failed to fetch labs:', err);
         }
     };
 
@@ -51,6 +72,27 @@ export default function DoctorAppointments() {
             fetchAppointments();
         } catch (err) {
             console.error(err);
+        }
+    };
+
+    const handleOrderTest = async () => {
+        if (!testName.trim() || !orderTestModal?.journeyId) return;
+
+        setOrdering(true);
+        try {
+            const labId = selectedLabId ? parseInt(selectedLabId) : null;
+            const selectedLab = labs.find(l => l.id === labId);
+            await journeyAPI.orderTest(orderTestModal.journeyId, testName.trim(), testNotes.trim(), labId);
+            const labInfo = selectedLab ? ` with ${selectedLab.name}` : '';
+            setMessage({ type: 'success', text: `Lab test "${testName}" ordered successfully${labInfo}!` });
+            setOrderTestModal(null);
+            setTestName('');
+            setTestNotes('');
+            setSelectedLabId('');
+        } catch (err) {
+            setMessage({ type: 'error', text: err.response?.data?.error || 'Failed to order test' });
+        } finally {
+            setOrdering(false);
         }
     };
 
@@ -85,8 +127,8 @@ export default function DoctorAppointments() {
                         key={status}
                         onClick={() => setFilter(status)}
                         className={`px-3 py-1.5 rounded-lg text-sm transition-colors ${filter === status
-                                ? 'bg-brand-mint text-brand-dark'
-                                : 'bg-brand-slate/50 text-brand-cream/70 hover:bg-brand-slate/70'
+                            ? 'bg-brand-mint text-brand-dark'
+                            : 'bg-brand-slate/50 text-brand-cream/70 hover:bg-brand-slate/70'
                             }`}
                     >
                         {status.replace('_', ' ')}
@@ -172,6 +214,19 @@ export default function DoctorAppointments() {
                                     </div>
                                 )}
 
+                                {/* Add Follow-up button for completed appointments */}
+                                {appt.status === 'COMPLETED' && appt.journey_id && (
+                                    <div className="mt-4 pt-3 border-t border-brand-cream/10 flex gap-2">
+                                        <button
+                                            onClick={() => setOrderTestModal({ journeyId: appt.journey_id, patientName: appt.patient_name })}
+                                            className="flex-1 py-2 bg-purple-500/20 text-purple-300 rounded-lg text-sm hover:bg-purple-500/30 transition-colors flex items-center justify-center gap-2"
+                                        >
+                                            <FlaskConical className="w-4 h-4" />
+                                            Add Follow-up
+                                        </button>
+                                    </div>
+                                )}
+
                                 {appt.is_paid && (
                                     <div className="mt-2">
                                         <span className="text-xs bg-green-500/20 text-green-300 px-2 py-0.5 rounded">
@@ -182,6 +237,117 @@ export default function DoctorAppointments() {
                             </div>
                         );
                     })}
+                </div>
+            )}
+
+            {/* Success/Error Message */}
+            {message && (
+                <div className={`fixed bottom-6 right-6 p-4 rounded-xl flex items-center gap-2 shadow-lg ${message.type === 'success'
+                    ? 'bg-green-500/90 text-white'
+                    : 'bg-red-500/90 text-white'
+                    }`}>
+                    {message.type === 'success' ? <CheckCircle className="w-5 h-5" /> : <XCircle className="w-5 h-5" />}
+                    {message.text}
+                    <button onClick={() => setMessage(null)} className="ml-2 hover:opacity-70">
+                        <X className="w-4 h-4" />
+                    </button>
+                </div>
+            )}
+
+            {/* Order Test Modal */}
+            {orderTestModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+                    <div className="bg-brand-dark rounded-2xl p-6 w-full max-w-md border border-brand-cream/20 shadow-xl">
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="text-lg font-semibold flex items-center gap-2">
+                                <FlaskConical className="w-5 h-5 text-purple-400" />
+                                Order Lab Test
+                            </h3>
+                            <button
+                                onClick={() => { setOrderTestModal(null); setTestName(''); setTestNotes(''); }}
+                                className="p-1 hover:bg-brand-slate/50 rounded-lg"
+                            >
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+
+                        <p className="text-sm text-brand-cream/60 mb-4">
+                            Order a lab test for <span className="text-brand-mint">{orderTestModal.patientName}</span>
+                        </p>
+
+                        <div className="space-y-4">
+                            <div>
+                                <label className="block text-sm font-medium text-brand-cream/80 mb-2">
+                                    Test Name *
+                                </label>
+                                <input
+                                    type="text"
+                                    value={testName}
+                                    onChange={(e) => setTestName(e.target.value)}
+                                    placeholder="e.g., Complete Blood Count, Lipid Profile"
+                                    className="w-full px-4 py-3 bg-brand-slate/50 border border-brand-cream/20 rounded-xl text-brand-cream placeholder-brand-cream/40 focus:outline-none focus:border-purple-400"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-brand-cream/80 mb-2">
+                                    Notes (Optional)
+                                </label>
+                                <textarea
+                                    value={testNotes}
+                                    onChange={(e) => setTestNotes(e.target.value)}
+                                    placeholder="Any special instructions for the lab"
+                                    rows={2}
+                                    className="w-full px-4 py-3 bg-brand-slate/50 border border-brand-cream/20 rounded-xl text-brand-cream placeholder-brand-cream/40 focus:outline-none focus:border-purple-400 resize-none"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-brand-cream/80 mb-2 flex items-center gap-2">
+                                    <Building2 className="w-4 h-4" />
+                                    Select Lab (Optional)
+                                </label>
+                                <select
+                                    value={selectedLabId}
+                                    onChange={(e) => setSelectedLabId(e.target.value)}
+                                    className="w-full px-4 py-3 bg-brand-slate/50 border border-brand-cream/20 rounded-xl text-brand-cream focus:outline-none focus:border-purple-400"
+                                >
+                                    <option value="">Any available lab</option>
+                                    {labs.map(lab => (
+                                        <option key={lab.id} value={lab.id}>
+                                            {lab.name} - {lab.address}
+                                        </option>
+                                    ))}
+                                </select>
+                                {labs.length === 0 && (
+                                    <p className="text-xs text-brand-cream/50 mt-1">No labs registered yet</p>
+                                )}
+                            </div>
+                        </div>
+
+                        <div className="flex gap-3 mt-6">
+                            <button
+                                onClick={() => { setOrderTestModal(null); setTestName(''); setTestNotes(''); setSelectedLabId(''); }}
+                                className="flex-1 py-2.5 rounded-xl border border-brand-cream/20 hover:bg-brand-slate/50 transition-colors"
+                            >
+                                Cancel
+                            </button>
+                            <button
+                                onClick={handleOrderTest}
+                                disabled={!testName.trim() || ordering}
+                                className="flex-1 py-2.5 bg-gradient-to-r from-purple-500 to-purple-600 text-white font-semibold rounded-xl hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center gap-2"
+                            >
+                                {ordering ? (
+                                    <RefreshCw className="w-4 h-4 animate-spin" />
+                                ) : (
+                                    <>
+                                        <Plus className="w-4 h-4" />
+                                        Order Test
+                                    </>
+                                )}
+                            </button>
+                        </div>
+                    </div>
                 </div>
             )}
         </div>

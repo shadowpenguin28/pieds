@@ -25,16 +25,22 @@ export default function PatientAppointments() {
 
     const [cancelTarget, setCancelTarget] = useState(null);
 
-    const INITIAL_DISPLAY_COUNT = 5;
+    const INITIAL_DISPLAY_COUNT = 3;
 
     const fetchAppointments = async () => {
         try {
             const res = await appointmentAPI.list();
-            // Sort by scheduled_time descending (most recent first)
-            const sorted = res.data.sort((a, b) =>
-                new Date(b.scheduled_time) - new Date(a.scheduled_time)
-            );
-            setAppointments(sorted);
+            // Separate upcoming and past appointments
+            const now = new Date();
+            const upcoming = res.data.filter(a => new Date(a.scheduled_time) >= now && a.status === 'SCHEDULED');
+            const others = res.data.filter(a => new Date(a.scheduled_time) < now || a.status !== 'SCHEDULED');
+
+            // Sort upcoming by closest first (ascending), others by most recent first (descending)
+            upcoming.sort((a, b) => new Date(a.scheduled_time) - new Date(b.scheduled_time));
+            others.sort((a, b) => new Date(b.scheduled_time) - new Date(a.scheduled_time));
+
+            // Combine: upcoming first, then past
+            setAppointments([...upcoming, ...others]);
         } catch (err) {
             console.error(err);
         } finally {
@@ -93,24 +99,16 @@ export default function PatientAppointments() {
     }
 
     return (
-        <div className="space-y-6">
+        <div className="min-h-[60vh] flex flex-col justify-center space-y-6">
             <div className="flex items-center justify-between">
                 <h1 className="text-2xl font-bold">My Appointments</h1>
-                <div className="flex items-center gap-2">
-                    <button
-                        onClick={() => navigate('/patient/appointments/book')}
-                        className="px-4 py-2 bg-gradient-to-r from-brand-mint to-brand-teal text-brand-dark font-semibold rounded-lg hover:opacity-90 transition-opacity flex items-center gap-2"
-                    >
-                        <Plus className="w-4 h-4" />
-                        Book New
-                    </button>
-                    <button
-                        onClick={fetchAppointments}
-                        className="p-2 hover:bg-brand-slate/50 rounded-lg transition-colors"
-                    >
-                        <RefreshCw className="w-5 h-5" />
-                    </button>
-                </div>
+                <button
+                    onClick={() => navigate('/patient/appointments/book')}
+                    className="px-4 py-2 bg-gradient-to-r from-brand-mint to-brand-teal text-brand-dark font-semibold rounded-lg hover:opacity-90 transition-opacity flex items-center gap-2"
+                >
+                    <Plus className="w-4 h-4" />
+                    Book New
+                </button>
             </div>
 
             {message && (
@@ -182,7 +180,7 @@ export default function PatientAppointments() {
                                             ) : (
                                                 <>
                                                     <CreditCard className="w-4 h-4" />
-                                                    Pay ₹{appt.consultation_fee || 200}
+                                                    Pay ₹{Math.ceil((appt.consultation_fee || 200) * 1.05)}
                                                 </>
                                             )}
                                         </button>

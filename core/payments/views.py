@@ -4,7 +4,7 @@ from rest_framework.permissions import IsAuthenticated
 from django.shortcuts import get_object_or_404
 from decimal import Decimal
 
-from .models import Wallet, Transaction
+from .models import Wallet, Transaction, COMMISSION_RATE
 from .serializers import WalletSerializer, TransactionSerializer, TopUpSerializer, PaymentSerializer
 from appointments.models import Appointment
 
@@ -80,26 +80,30 @@ class AppointmentPaymentView(views.APIView):
         if amount <= 0:
             return Response({"error": "Doctor has no consultation fee set"}, status=status.HTTP_400_BAD_REQUEST)
         
+        # Calculate commission (5% on top of consultation fee)
+        commission = (amount * COMMISSION_RATE).quantize(Decimal("0.01"))
+        total_amount = amount + commission
+        
         # Get patient wallet
         patient_wallet, _ = Wallet.objects.get_or_create(user=request.user)
         
-        # Check balance
-        if patient_wallet.balance < amount:
+        # Check balance (must cover consultation fee + commission)
+        if patient_wallet.balance < total_amount:
             return Response({
                 "error": "Insufficient balance",
-                "required": str(amount),
+                "required": str(total_amount),
                 "available": str(patient_wallet.balance)
             }, status=status.HTTP_400_BAD_REQUEST)
         
-        # Debit from patient
+        # Debit total from patient (consultation fee + commission)
         patient_wallet.debit(
-            amount=amount,
+            amount=total_amount,
             reason="PAYMENT_DONE",
             appointment=appointment,
-            description=f"Payment for appointment with Dr. {appointment.doctor.user.first_name}"
+            description=f"Payment for appointment with Dr. {appointment.doctor.user.first_name} (includes ₹{commission} platform fee)"
         )
         
-        # Credit to doctor
+        # Credit full consultation fee to doctor
         doctor_wallet, _ = Wallet.objects.get_or_create(user=appointment.doctor.user)
         doctor_wallet.credit(
             amount=amount,
@@ -108,13 +112,17 @@ class AppointmentPaymentView(views.APIView):
             description=f"Payment received from {appointment.patient.user.first_name}"
         )
         
+
+        
         # Mark appointment as paid
         appointment.is_paid = True
         appointment.save()
         
         return Response({
             "message": "Payment successful",
-            "amount": str(amount),
+            "consultation_fee": str(amount),
+            "platform_fee": str(commission),
+            "total_paid": str(total_amount),
             "patient_new_balance": str(patient_wallet.balance)
         })
 

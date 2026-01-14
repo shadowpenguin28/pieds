@@ -41,67 +41,87 @@ class AppointmentListCreateView(generics.ListCreateAPIView):
         - If journey_id provided: Add step to existing journey (follow-up)
         - If no journey_id: Create new journey + first step
         - If grant_consent: Auto-grant consent to doctor's org
+        
+        Uses atomic transaction to prevent race conditions in concurrent booking.
         """
         from rest_framework.exceptions import PermissionDenied, ValidationError
         from journeys.models import Journey, JourneyStep, HealthDataConsent
         from django.utils import timezone as tz
+        from django.db import transaction
         
         if not self.request.user.is_patient:
             raise PermissionDenied("Only patients can create appointments")
         
-        patient = self.request.user.patient_profile
-        doctor = serializer.validated_data['doctor']
-        journey_id = serializer.validated_data.pop('journey_id', None)
-        reason = serializer.validated_data.pop('reason', None)
-        grant_consent = serializer.validated_data.pop('grant_consent', False)
-        
-        # Get or create journey
-        if journey_id:
-            # Follow-up: Add to existing journey
-            try:
-                journey = Journey.objects.get(id=journey_id, patient=patient)
-            except Journey.DoesNotExist:
-                raise ValidationError({"journey_id": "Journey not found or does not belong to you"})
-        else:
-            # New: Create journey
-            journey = Journey.objects.create(
-                patient=patient,
-                title=reason or f"Consultation - {serializer.validated_data['scheduled_time'].strftime('%b %d, %Y')}",
-                created_by_org=doctor.organization
+        # Wrap in transaction to prevent race conditions
+        with transaction.atomic():
+            patient = self.request.user.patient_profile
+            doctor = serializer.validated_data['doctor']
+            journey_id = serializer.validated_data.pop('journey_id', None)
+            reason = serializer.validated_data.pop('reason', None)
+            grant_consent = serializer.validated_data.pop('grant_consent', False)
+            
+            # Double-check slot availability inside transaction (re-validate)
+            from datetime import timedelta
+            scheduled_time = serializer.validated_data['scheduled_time']
+            slot_window = timedelta(minutes=30)
+            
+            conflicting = Appointment.objects.select_for_update().filter(
+                doctor=doctor,
+                scheduled_time__gte=scheduled_time - slot_window,
+                scheduled_time__lt=scheduled_time + slot_window,
+                status__in=['SCHEDULED', 'IN_PROGRESS', 'COMPLETED']
+            ).exists()
+            
+            if conflicting:
+                raise ValidationError({"scheduled_time": "This slot was just booked. Please choose another time."})
+            
+            # Get or create journey
+            if journey_id:
+                # Follow-up: Add to existing journey
+                try:
+                    journey = Journey.objects.get(id=journey_id, patient=patient)
+                except Journey.DoesNotExist:
+                    raise ValidationError({"journey_id": "Journey not found or does not belong to you"})
+            else:
+                # New: Create journey
+                journey = Journey.objects.create(
+                    patient=patient,
+                    title=reason or f"Consultation - {serializer.validated_data['scheduled_time'].strftime('%b %d, %Y')}",
+                    created_by_org=doctor.organization
+                )
+            
+            # Handle auto-consent if requested
+            if grant_consent and doctor.organization:
+                consent, created = HealthDataConsent.objects.get_or_create(
+                    patient=patient,
+                    requesting_org=doctor.organization,
+                    defaults={
+                        'requesting_doctor': doctor,
+                        'status': 'GRANTED',
+                        'purpose': f"Auto-granted for journey: {journey.title}",
+                        'responded_at': tz.now()
+                    }
+                )
+                # If consent already exists but was denied/revoked, update it
+                if not created and consent.status in ['DENIED', 'REVOKED']:
+                    consent.status = 'GRANTED'
+                    consent.purpose = f"Auto-granted for journey: {journey.title}"
+                    consent.responded_at = tz.now()
+                    consent.save()
+            
+            # Create consultation step
+            step_order = journey.steps.count() + 1
+            step = JourneyStep.objects.create(
+                journey=journey,
+                type="CONSULTATION",
+                order=step_order,
+                notes=f"Appointment with Dr. {doctor.user.first_name} {doctor.user.last_name}",
+                created_by_org=doctor.organization,
+                created_by_doctor=doctor
             )
-        
-        # Handle auto-consent if requested
-        if grant_consent and doctor.organization:
-            consent, created = HealthDataConsent.objects.get_or_create(
-                patient=patient,
-                requesting_org=doctor.organization,
-                defaults={
-                    'requesting_doctor': doctor,
-                    'status': 'GRANTED',
-                    'purpose': f"Auto-granted for journey: {journey.title}",
-                    'responded_at': tz.now()
-                }
-            )
-            # If consent already exists but was denied/revoked, update it
-            if not created and consent.status in ['DENIED', 'REVOKED']:
-                consent.status = 'GRANTED'
-                consent.purpose = f"Auto-granted for journey: {journey.title}"
-                consent.responded_at = tz.now()
-                consent.save()
-        
-        # Create consultation step
-        step_order = journey.steps.count() + 1
-        step = JourneyStep.objects.create(
-            journey=journey,
-            type="CONSULTATION",
-            order=step_order,
-            notes=f"Appointment with Dr. {doctor.user.first_name} {doctor.user.last_name}",
-            created_by_org=doctor.organization,
-            created_by_doctor=doctor
-        )
-        
-        # Save appointment with step linked
-        serializer.save(patient=patient, journey_step=step)
+            
+            # Save appointment with step linked
+            serializer.save(patient=patient, journey_step=step)
 
 
 class AppointmentDetailView(generics.RetrieveUpdateAPIView):

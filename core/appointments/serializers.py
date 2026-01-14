@@ -12,6 +12,7 @@ class AppointmentSerializer(serializers.ModelSerializer):
     doctor_specialization = serializers.SerializerMethodField()
     actual_duration_minutes = serializers.SerializerMethodField()
     consultation_fee = serializers.SerializerMethodField()
+    journey_id = serializers.SerializerMethodField()
     
     class Meta:
         model = Appointment
@@ -20,7 +21,7 @@ class AppointmentSerializer(serializers.ModelSerializer):
             'doctor', 'doctor_name', 'doctor_specialization',
             'scheduled_time', 'status', 'estimated_duration',
             'actual_start_time', 'actual_end_time', 'actual_duration_minutes',
-            'journey_step', 'created_at', 'is_paid', 'consultation_fee'
+            'journey_step', 'journey_id', 'created_at', 'is_paid', 'consultation_fee'
         ]
         read_only_fields = ['actual_start_time', 'actual_end_time', 'created_at', 'is_paid']
     
@@ -43,6 +44,11 @@ class AppointmentSerializer(serializers.ModelSerializer):
     
     def get_consultation_fee(self, obj):
         return str(obj.doctor.consultation_fee)
+    
+    def get_journey_id(self, obj):
+        if obj.journey_step:
+            return obj.journey_step.journey_id
+        return None
 
 
 class AppointmentCreateSerializer(serializers.ModelSerializer):
@@ -71,12 +77,36 @@ class AppointmentCreateSerializer(serializers.ModelSerializer):
         return value
     
     def validate(self, data):
+        from django.db import transaction
+        from datetime import timedelta
+        
         journey_id = data.get('journey_id')
         reason = data.get('reason')
+        doctor = data.get('doctor')
+        scheduled_time = data.get('scheduled_time')
         
         # If no journey_id, reason is required for new journey title
         if not journey_id and not reason:
-            data['reason'] = f"Consultation - {data['scheduled_time'].strftime('%b %d, %Y')}"
+            data['reason'] = f"Consultation - {scheduled_time.strftime('%b %d, %Y')}"
+        
+        # Check for slot conflicts - prevent double booking
+        # Define a 30-minute slot window (appointments within 30 min of each other conflict)
+        slot_window = timedelta(minutes=30)
+        slot_start = scheduled_time - slot_window
+        slot_end = scheduled_time + slot_window
+        
+        # Check if there's an existing non-cancelled appointment in this time window
+        conflicting = Appointment.objects.filter(
+            doctor=doctor,
+            scheduled_time__gte=slot_start,
+            scheduled_time__lt=slot_end,
+            status__in=['SCHEDULED', 'IN_PROGRESS', 'COMPLETED']
+        ).exists()
+        
+        if conflicting:
+            raise serializers.ValidationError({
+                "scheduled_time": "This time slot is already booked. Please choose a different time."
+            })
         
         return data
 

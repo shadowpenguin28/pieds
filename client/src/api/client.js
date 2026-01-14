@@ -94,8 +94,16 @@ export const journeyAPI = {
     createStep: (data) => api.post('/journeys/steps/', data),
     requestAccess: (patientAbhaId, purpose) => api.post('/journeys/request-access/', { patient_abha_id: patientAbhaId, purpose }),
     getConsents: () => api.get('/journeys/my-consents/'),
+    getDoctorConsents: () => api.get('/journeys/doctor-consents/'),
     respondConsent: (consentId, status) => api.post(`/journeys/consent/${consentId}/respond/`, { status }),
     getByAbha: (abhaId) => api.get(`/journeys/by-abha/${abhaId}/`),
+    orderTest: (journeyId, testName, notes = '', labId = null) => api.post('/journeys/order-test/', { journey_id: journeyId, test_name: testName, notes, lab_id: labId }),
+    prescribe: (journeyId, medications, notes = '') => api.post('/journeys/prescribe/', { journey_id: journeyId, medications, notes }),
+};
+
+// Lab APIs
+export const labAPI = {
+    list: () => api.get('/auth/labs/'),
 };
 
 // QR APIs
